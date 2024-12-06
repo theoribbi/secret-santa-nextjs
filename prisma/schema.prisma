@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Edition {
+  id        String    @id @default(uuid())
+  name      String
+  createdAt DateTime  @default(now())
+  status    String    @default("PENDING") // PENDING, COMPLETED
+  people    Person[]
+}
+
+model Person {
+  id        String    @id @default(uuid())
+  name      String
+  email     String?
+  giftIdeas String?
+  imageUrl  String?
+  editionId String
+  edition   Edition   @relation(fields: [editionId], references: [id])
+  assignedToId String? @unique
+  assignedTo Person?  @relation("SecretSanta", fields: [assignedToId], references: [id])
+  assignedFor Person? @relation("SecretSanta")
+}
