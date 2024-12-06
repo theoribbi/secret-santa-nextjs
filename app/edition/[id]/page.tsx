@@ -112,22 +112,24 @@ export default function EditionPage({ params }: { params: { id: string } }) {
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Participants</h2>
             <div className="space-y-2">
-              {edition.people.map((person: Person) => (
-                <Button
-                  key={person.id}
-                  variant={
-                    person.email && person.giftIdeas ? "default" : "outline"
-                  }
-                  className="w-full justify-between"
-                  onClick={() => handlePersonSelect(person)}
-                  disabled={edition.status === "COMPLETED"}
-                >
-                  <span>{person.name}</span>
-                  {person.email && person.giftIdeas && (
-                    <Check className="h-4 w-4" />
-                  )}
-                </Button>
-              ))}
+              {edition.people.map((person: Person) => {
+                const isPersonCompleted = !!person.email && !!person.giftIdeas;
+
+                return (
+                  <Button
+                    key={person.id}
+                    variant={isPersonCompleted ? "default" : "outline"}
+                    className="w-full justify-between"
+                    onClick={() => handlePersonSelect(person)}
+                    disabled={Boolean(
+                      isPersonCompleted || edition.status === "COMPLETED"
+                    )}
+                  >
+                    <span>{person.name}</span>
+                    {isPersonCompleted && <Check className="h-4 w-4" />}
+                  </Button>
+                );
+              })}
             </div>
 
             {edition.status === "PENDING" && (
