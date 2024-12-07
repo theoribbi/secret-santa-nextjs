@@ -30,7 +30,7 @@ export default function Home() {
   const handleSubmit = async () => {
     const validParticipants = participants.filter((name) => name.trim() !== "");
     if (validParticipants.length < 3) {
-      alert("Please add at least 3 participants");
+      alert("Veuillez ajouter au moins 3 participants");
       return;
     }
 

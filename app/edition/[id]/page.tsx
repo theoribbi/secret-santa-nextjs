@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ export default function EditionPage({ params }: { params: { id: string } }) {
   const [email, setEmail] = useState("");
   const [giftIdeas, setGiftIdeas] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const inputFileRef = useRef<HTMLInputElement>(null); // Référence pour l'input file
 
   useEffect(() => {
     const fetchEdition = async () => {
@@ -42,16 +43,23 @@ export default function EditionPage({ params }: { params: { id: string } }) {
   const handleSubmit = async () => {
     if (!selectedPerson) return;
 
+    // Créer un FormData pour inclure les données et le fichier image
+    const formData = new FormData();
+    formData.append("email", email);
+    formData.append("giftIdeas", giftIdeas);
+
+    // Ajout du fichier image si présent
+    if (inputFileRef.current?.files) {
+      const file = inputFileRef.current.files[0];
+      if (file) {
+        formData.append("image", file); // Envoie le fichier
+      }
+    }
+
     try {
       const response = await fetch(`/api/editions/${params.id}/person`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          personId: selectedPerson.id,
-          email,
-          giftIdeas,
-          imageUrl,
-        }),
+        body: formData, // Envoie le FormData avec l'image et les autres données
       });
 
       if (response.ok) {
@@ -66,7 +74,7 @@ export default function EditionPage({ params }: { params: { id: string } }) {
               }
             : null
         );
-        setSelectedPerson(null);
+        setSelectedPerson(null); // Réinitialiser la personne sélectionnée après mise à jour
       }
     } catch (error) {
       console.error("Failed to update person:", error);
@@ -103,8 +111,8 @@ export default function EditionPage({ params }: { params: { id: string } }) {
           </h1>
           <p className="mt-2 text-lg text-gray-600">
             {edition.status === "COMPLETED"
-              ? "Secret Santa assignments have been sent!"
-              : "Click on your name to add your details"}
+              ? "Les attributions du Secret Santa ont été envoyées !"
+              : "Cliquez sur votre nom pour ajouter vos informations"}
           </p>
         </div>
 
@@ -138,14 +146,16 @@ export default function EditionPage({ params }: { params: { id: string } }) {
                 onClick={handleDraw}
                 disabled={!isReadyToDraw}
               >
-                Send Secret Santa Assignments
+                Envoyer les résultats par e-mail
               </Button>
             )}
           </Card>
 
           {selectedPerson && (
             <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Your Details</h2>
+              <h2 className="text-xl font-semibold mb-4">
+                Détail de {selectedPerson.name}
+              </h2>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
@@ -156,7 +166,7 @@ export default function EditionPage({ params }: { params: { id: string } }) {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your@email.com"
+                    placeholder="ton@email.com"
                     className="mt-1"
                   />
                 </div>
@@ -164,12 +174,12 @@ export default function EditionPage({ params }: { params: { id: string } }) {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
                     <Gift className="inline-block w-4 h-4 mr-2" />
-                    Gift Ideas
+                    Idées de cadeaux
                   </label>
                   <Textarea
                     value={giftIdeas}
                     onChange={(e) => setGiftIdeas(e.target.value)}
-                    placeholder="Share your gift ideas..."
+                    placeholder="Partagez vos idées de cadeaux..."
                     className="mt-1"
                   />
                 </div>
@@ -177,13 +187,12 @@ export default function EditionPage({ params }: { params: { id: string } }) {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
                     <ImageIcon className="inline-block w-4 h-4 mr-2" />
-                    Image URL (optional)
+                    Image (optional)
                   </label>
                   <Input
-                    type="url"
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder="https://example.com/image.jpg"
+                    ref={inputFileRef} // Référence de l'input file
+                    type="file"
+                    accept="image/*"
                     className="mt-1"
                   />
                 </div>
