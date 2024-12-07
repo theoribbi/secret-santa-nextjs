@@ -1,19 +1,19 @@
 "use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Gift } from "lucide-react";
-import { useRouter } from 'next/navigation';
+import { Gift, Plus, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
-  const [editionName, setEditionName] = useState('');
-  const [participants, setParticipants] = useState(['']);
+  const [editionName, setEditionName] = useState("");
+  const [participants, setParticipants] = useState([""]);
   const router = useRouter();
 
   const addParticipant = () => {
-    setParticipants([...participants, '']);
+    setParticipants([...participants, ""]);
   };
 
   const updateParticipant = (index: number, value: string) => {
@@ -28,16 +28,16 @@ export default function Home() {
   };
 
   const handleSubmit = async () => {
-    const validParticipants = participants.filter(name => name.trim() !== '');
+    const validParticipants = participants.filter((name) => name.trim() !== "");
     if (validParticipants.length < 3) {
-      alert('Please add at least 3 participants');
+      alert("Please add at least 3 participants");
       return;
     }
 
     try {
-      const response = await fetch('/api/editions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/editions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: editionName,
           people: validParticipants,
@@ -47,7 +47,7 @@ export default function Home() {
       const data = await response.json();
       router.push(`/edition/${data.id}`);
     } catch (error) {
-      console.error('Failed to create edition:', error);
+      console.error("Failed to create edition:", error);
     }
   };
 
@@ -56,22 +56,29 @@ export default function Home() {
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-12">
           <Gift className="mx-auto h-16 w-16 text-primary" />
-          <h1 className="mt-6 text-4xl font-bold text-gray-900">Secret Santa Organizer</h1>
-          <p className="mt-2 text-lg text-gray-600">Create your Secret Santa event and invite participants</p>
+          <h1 className="mt-6 text-4xl font-bold text-gray-900">
+            Secret Santa
+          </h1>
+          <p className="mt-2 text-lg text-gray-600">
+            Créez votre événement Secret Santa et invitez des participants
+          </p>
         </div>
 
         <Card className="p-6 bg-white shadow-lg rounded-lg">
           <div className="space-y-6">
             <div>
-              <label htmlFor="editionName" className="block text-sm font-medium text-gray-700">
-                Event Name
+              <label
+                htmlFor="editionName"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Nom de l'événement
               </label>
               <Input
                 id="editionName"
                 type="text"
                 value={editionName}
                 onChange={(e) => setEditionName(e.target.value)}
-                placeholder="Christmas 2024"
+                placeholder="Noël 2024"
                 className="mt-1"
               />
             </div>
@@ -81,19 +88,20 @@ export default function Home() {
                 Participants
               </label>
               {participants.map((participant, index) => (
-                <div key={index} className="flex gap-2">
+                <div key={index} className="flex items-center gap-2">
                   <Input
                     value={participant}
                     onChange={(e) => updateParticipant(index, e.target.value)}
-                    placeholder="Participant name"
+                    placeholder="Prénom du participant"
                   />
                   {participants.length > 1 && (
-                    <Button
-                      variant="destructive"
+                    <button
                       onClick={() => removeParticipant(index)}
+                      className="text-red-500 hover:text-red-700 p-2 rounded-full flex items-center justify-center"
+                      aria-label="Supprimer le participant"
                     >
-                      Remove
-                    </Button>
+                      <Trash2 className="h-5 w-5" />
+                    </button>
                   )}
                 </div>
               ))}
@@ -102,16 +110,18 @@ export default function Home() {
                 onClick={addParticipant}
                 className="w-full"
               >
-                Add Participant
+                Ajouter un participant
               </Button>
             </div>
 
             <Button
               onClick={handleSubmit}
               className="w-full"
-              disabled={!editionName || participants.filter(p => p.trim()).length < 3}
+              disabled={
+                !editionName || participants.filter((p) => p.trim()).length < 3
+              }
             >
-              Create Secret Santa Event
+              Créer l'événement
             </Button>
           </div>
         </Card>
