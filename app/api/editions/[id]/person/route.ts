@@ -11,10 +11,13 @@ interface PersonRequest {
   image?: File;
 }
 
+const vercelBlobToken = process.env.VERCEL_BLOB_TOKEN;
+
 async function uploadToVercelBlobStorage(file: File, filename: string): Promise<string> {
   try {
     const blob = await put(filename, file.stream(), {
       access: 'public',
+      token: vercelBlobToken
     });
 
     return blob.url;
@@ -26,13 +29,29 @@ async function uploadToVercelBlobStorage(file: File, filename: string): Promise<
 
 export async function PUT(request: Request, { params }: { params: { id: string } }): Promise<NextResponse> {
   try {
-    const { personId, email, giftIdeas, image }: PersonRequest = await request.json();
+    const contentType = request.headers.get('content-type');
+    console.log('Content-Type:', contentType);
+
+    if (!contentType?.includes('multipart/form-data')) {
+      return NextResponse.json({ error: 'Invalid content type' }, { status: 400 });
+    }
+
+    const formData = await request.formData();
+    const personId = formData.get('personId') as string;
+    const email = formData.get('email') as string;
+    const giftIdeas = formData.get('giftIdeas') as string;
+    const image = formData.get('image') as File | null;
+
+    console.log('Received data:', { personId, email, giftIdeas, image });
+
+    if (!personId) {
+      return NextResponse.json({ error: 'personId is required' }, { status: 400 });
+    }
 
     let imageUrl: string | null = null;
 
     if (image) {
       const filename = image.name || `image_${Date.now()}`;
-
       imageUrl = await uploadToVercelBlobStorage(image, filename);
     }
 

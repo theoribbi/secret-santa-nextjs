@@ -22,7 +22,7 @@ export default function EditionPage({ params }: { params: { id: string } }) {
   const [email, setEmail] = useState("");
   const [giftIdeas, setGiftIdeas] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const inputFileRef = useRef<HTMLInputElement>(null); // Référence pour l'input file
+  const inputFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetchEdition = async () => {
@@ -43,39 +43,42 @@ export default function EditionPage({ params }: { params: { id: string } }) {
   const handleSubmit = async () => {
     if (!selectedPerson) return;
 
-    // Créer un FormData pour inclure les données et le fichier image
     const formData = new FormData();
+    formData.append("personId", selectedPerson.id);
     formData.append("email", email);
     formData.append("giftIdeas", giftIdeas);
 
-    // Ajout du fichier image si présent
     if (inputFileRef.current?.files) {
       const file = inputFileRef.current.files[0];
       if (file) {
-        formData.append("image", file); // Envoie le fichier
+        formData.append("image", file);
       }
     }
 
     try {
       const response = await fetch(`/api/editions/${params.id}/person`, {
         method: "PUT",
-        body: formData, // Envoie le FormData avec l'image et les autres données
+        body: formData,
       });
 
-      if (response.ok) {
-        const updatedPerson = await response.json();
-        setEdition((prev) =>
-          prev
-            ? {
-                ...prev,
-                people: prev.people.map((p: Person) =>
-                  p.id === updatedPerson.id ? updatedPerson : p
-                ),
-              }
-            : null
-        );
-        setSelectedPerson(null); // Réinitialiser la personne sélectionnée après mise à jour
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Failed to update person:", errorData.error);
+        return;
       }
+
+      const updatedPerson = await response.json();
+      setEdition((prev) =>
+        prev
+          ? {
+              ...prev,
+              people: prev.people.map((p: Person) =>
+                p.id === updatedPerson.id ? updatedPerson : p
+              ),
+            }
+          : null
+      );
+      setSelectedPerson(null);
     } catch (error) {
       console.error("Failed to update person:", error);
     }
