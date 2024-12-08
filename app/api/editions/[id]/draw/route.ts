@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Person, Edition } from '@prisma/client';
 import nodemailer from 'nodemailer';
 
 const prisma = new PrismaClient();
 
-function shuffleArray(array: any[]) {
+function shuffleArray<T>(array: T[]): T[] {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
@@ -12,9 +12,23 @@ function shuffleArray(array: any[]) {
   return array;
 }
 
+function assignSecretSanta(people: Person[]): Person[] {
+  const shuffled = shuffleArray([...people]);
+
+  for (let i = 0; i < people.length; i++) {
+    if (people[i].id === shuffled[i].id) {
+      const temp = shuffled[i];
+      shuffled[i] = shuffled[shuffled.length - 1];
+      shuffled[shuffled.length - 1] = temp;
+    }
+  }
+
+  return shuffled;
+}
+
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT || '587'),
+  port: parseInt(process.env.SMTP_PORT || '587', 10),
   secure: process.env.SMTP_PORT === '465',
   auth: process.env.SMTP_USER && process.env.SMTP_PASS
     ? {
@@ -24,13 +38,11 @@ const transporter = nodemailer.createTransport({
     : undefined,
 });
 
-
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
-) {
+): Promise<Response> {
   try {
-    // Fetch edition and people
     const edition = await prisma.edition.findUnique({
       where: { id: params.id },
       include: { people: true },
@@ -48,12 +60,10 @@ export async function POST(
       );
     }
 
-    const shuffled = shuffleArray([...people]);
+    const shuffled = assignSecretSanta(people);
 
-    // Use a transaction for atomicity
     await prisma.$transaction(async (tx) => {
       for (let i = 0; i < people.length; i++) {
-        // Update Secret Santa pair
         await tx.person.update({
           where: { id: people[i].id },
           data: {
@@ -61,12 +71,11 @@ export async function POST(
           },
         });
 
-        // Send email
         if (people[i].email) {
           try {
             await transporter.sendMail({
               from: process.env.SMTP_FROM,
-              to: people[i].email?.toString(),
+              to: people[i]?.email?.toString(),
               subject: `Votre Secret Santa pour ${edition.name}`,
               html: `
                 <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
@@ -100,7 +109,7 @@ export async function POST(
         }
       }
 
-      // Mark edition as completed
+      // Mettre à jour le statut de l'édition
       await tx.edition.update({
         where: { id: params.id },
         data: { status: 'COMPLETED' },
