@@ -17,9 +17,8 @@ function assignSecretSanta(people: Person[]): Person[] {
 
   for (let i = 0; i < people.length; i++) {
     if (people[i].id === shuffled[i].id) {
-      const temp = shuffled[i];
-      shuffled[i] = shuffled[shuffled.length - 1];
-      shuffled[shuffled.length - 1] = temp;
+      const swapIndex = (i + 1) % people.length;
+      [shuffled[i], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[i]];
     }
   }
 
@@ -109,7 +108,6 @@ export async function POST(
         }
       }
 
-      // Mettre à jour le statut de l'édition
       await tx.edition.update({
         where: { id: params.id },
         data: { status: 'COMPLETED' },
