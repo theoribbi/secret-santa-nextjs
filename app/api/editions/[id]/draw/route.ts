@@ -61,20 +61,34 @@ export async function POST(
 
     const shuffled = assignSecretSanta(people);
 
-    await prisma.$transaction(async (tx) => {
-      for (let i = 0; i < people.length; i++) {
-        await tx.person.update({
-          where: { id: people[i].id },
-          data: {
-            assignedToId: shuffled[i].id,
-          },
-        });
+    await prisma.$transaction(
+      async (tx) => {
+        await Promise.all(
+          people.map((person, index) =>
+            tx.person.update({
+              where: { id: person.id },
+              data: {
+                assignedToId: shuffled[index].id,
+              },
+            })
+          )
+        );
 
-        if (people[i].email) {
+        await tx.edition.update({
+          where: { id: params.id },
+          data: { status: 'COMPLETED' },
+        });
+      },
+      { timeout: 10000 }
+    );
+
+    await Promise.all(
+      people.map(async (person, index) => {
+        if (person.email) {
           try {
             await transporter.sendMail({
               from: process.env.SMTP_FROM,
-              to: people[i]?.email?.toString(),
+              to: person.email.toString(),
               subject: `🎅 Découvrez votre Secret Santa pour ${edition.name}! 🎁`,
               html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff; border: 1px solid #dddddd; border-radius: 10px;">
@@ -84,19 +98,19 @@ export async function POST(
                   </header>
                   <main style="padding: 20px 0;">
                     <p style="color: #34495e; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
-                      Bonjour <strong>${people[i].name}</strong>,
+                      Bonjour <strong>${person.name}</strong>,
                     </p>
                     <p style="color: #34495e; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
-                      Vous avez tirer au sort :
+                      Vous avez tiré au sort :
                     </p>
                     <div style="text-align: center; margin: 20px 0; padding: 20px; background-color: #f4f6f7; border-radius: 10px; border: 1px solid #cccccc;">
-                      <h2 style="color: #2c3e50; font-size: 20px; margin: 0;">🎁 ${shuffled[i].name} 🎁</h2>
-                      <p style="color: #7f8c8d; font-size: 14px; margin: 10px 0;">Voici quelques idées de cadeaux renseigné par ${shuffled[i].name} : </p>
-                      <p style="color: #2c3e50; font-size: 16px; font-style: italic;">"${shuffled[i].giftIdeas || 'Aucune idée spécifique fournie'}"</p>
+                      <h2 style="color: #2c3e50; font-size: 20px; margin: 0;">🎁 ${shuffled[index].name} 🎁</h2>
+                      <p style="color: #7f8c8d; font-size: 14px; margin: 10px 0;">Voici quelques idées de cadeaux renseignées par ${shuffled[index].name} :</p>
+                      <p style="color: #2c3e50; font-size: 16px; font-style: italic;">"${shuffled[index].giftIdeas || 'Aucune idée spécifique fournie'}"</p>
                       ${
-                        shuffled[i].imageUrl
+                        shuffled[index].imageUrl
                           ? `<div style="margin-top: 20px;">
-                               <img src="${shuffled[i].imageUrl}" alt="Idée de cadeau" style="max-width: 100%; height: auto; border-radius: 5px; border: 1px solid #ddd;">
+                               <img src="${shuffled[index].imageUrl}" alt="Idée de cadeau" style="max-width: 100%; height: auto; border-radius: 5px; border: 1px solid #ddd;">
                              </div>`
                           : ''
                       }
@@ -111,19 +125,11 @@ export async function POST(
               `,
             });
           } catch (emailError) {
-            console.error(
-              `Failed to send email to ${people[i].email}:`,
-              emailError
-            );
+            console.error(`Failed to send email to ${person.email}:`, emailError);
           }
         }
-      }
-
-      await tx.edition.update({
-        where: { id: params.id },
-        data: { status: 'COMPLETED' },
-      });
-    });
+      })
+    );
 
     return NextResponse.json({ success: true });
   } catch (error) {
