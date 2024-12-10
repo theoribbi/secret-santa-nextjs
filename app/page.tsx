@@ -4,13 +4,16 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Gift, Plus, Trash2 } from "lucide-react";
+import { Gift, Plus, Trash2, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Home() {
   const [editionName, setEditionName] = useState("");
   const [participants, setParticipants] = useState([""]);
   const router = useRouter();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const addParticipant = () => {
     setParticipants([...participants, ""]);
@@ -34,6 +37,8 @@ export default function Home() {
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
       const response = await fetch("/api/editions", {
         method: "POST",
@@ -46,8 +51,19 @@ export default function Home() {
 
       const data = await response.json();
       router.push(`/edition/${data.id}`);
+      toast({
+        title: "Événement créé !",
+        description: "Votre événement Secret Santa a été créé avec succès.",
+      });
     } catch (error) {
       console.error("Failed to create edition:", error);
+      toast({
+        title: "Erreur lors de la création.",
+        description:
+          "Une erreur s'est produite lors de la création de l'événement.",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -121,7 +137,11 @@ export default function Home() {
                 !editionName || participants.filter((p) => p.trim()).length < 3
               }
             >
-              Créer l'événement
+              {isSubmitting ? (
+                <Loader2 className="animate-spin h-5 w-5 text-white" />
+              ) : (
+                "Créer l'événement"
+              )}
             </Button>
           </div>
         </Card>
