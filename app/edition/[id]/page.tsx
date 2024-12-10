@@ -217,7 +217,8 @@ export default function EditionPage({ params }: { params: { id: string } }) {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmation</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir envoyer les résultats ? Cette action est irréversible.
+              Êtes-vous sûr de vouloir envoyer les résultats ? Cette action est
+              irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -352,6 +353,22 @@ export default function EditionPage({ params }: { params: { id: string } }) {
               </div>
             </DialogContent>
           </Dialog>
+
+          {edition?.status === "COMPLETED" && (
+            <div className="pt-4 ">
+              <div
+                className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative"
+                role="alert"
+              >
+                <strong className="font-bold">Succès !</strong>
+                <span className="block sm:inline">
+                  {" "}
+                  Le tirage au sort a été effectué avec succès, et tous les
+                  participants ont reçu un email avec les détails.
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>
