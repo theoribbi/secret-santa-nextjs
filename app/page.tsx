@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Gift, Plus, Trash2, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
 
 export default function Home() {
   const [editionName, setEditionName] = useState("");
@@ -14,6 +15,7 @@ export default function Home() {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showWarningModal, setShowWarningModal] = useState(false);
 
   const addParticipant = () => {
     setParticipants([...participants, ""]);
@@ -33,7 +35,7 @@ export default function Home() {
   const handleSubmit = async () => {
     const validParticipants = participants.filter((name) => name.trim() !== "");
     if (validParticipants.length < 3) {
-      alert("Veuillez ajouter au moins 3 participants");
+      setShowWarningModal(true);
       return;
     }
 
@@ -79,6 +81,23 @@ export default function Home() {
             Créez votre événement Secret Santa et invitez des participants
           </p>
         </div>
+
+        <AlertDialog open={showWarningModal} onOpenChange={() => setShowWarningModal(false)}>
+          <AlertDialogTrigger>
+            <Button onClick={() => setShowWarningModal(true)} style={{ display: 'none' }}>Open</Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Avertissement</AlertDialogTitle>
+              <AlertDialogDescription>
+                Vous devez ajouter au moins 3 participants pour créer l'événement.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setShowWarningModal(false)}>Fermer</AlertDialogCancel>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <Card className="p-6 bg-white shadow-lg rounded-lg">
           <div className="space-y-6">
@@ -133,9 +152,6 @@ export default function Home() {
             <Button
               onClick={handleSubmit}
               className="w-full"
-              disabled={
-                !editionName || participants.filter((p) => p.trim()).length < 3
-              }
             >
               {isSubmitting ? (
                 <Loader2 className="animate-spin h-5 w-5 text-white" />
