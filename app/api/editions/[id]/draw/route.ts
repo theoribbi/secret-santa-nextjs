@@ -75,27 +75,38 @@ export async function POST(
             await transporter.sendMail({
               from: process.env.SMTP_FROM,
               to: people[i]?.email?.toString(),
-              subject: `Votre Secret Santa pour ${edition.name}`,
+              subject: `🎅 Découvrez votre Secret Santa pour ${edition.name}! 🎁`,
               html: `
-                <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                  <h1 style="color: #e63946;">🎅 Secret Santa 🎁</h1>
-                  <p>Bonjour,</p>
-                  <p>
-                    Vous êtes le Secret Santa pour : 
-                    <strong style="color: #1d3557;">${shuffled[i].name}</strong>
-                  </p>
-                  <h2 style="color: #457b9d;">Idées de cadeaux :</h2>
-                  <p style="background-color: #f1faee; padding: 10px; border-radius: 5px;">
-                    ${shuffled[i].giftIdeas || 'Aucune idée spécifique fournie'}
-                  </p>
-                  ${
-                    shuffled[i].imageUrl
-                      ? `<div style="margin-top: 20px; text-align: center;">
-                           <img src="${shuffled[i].imageUrl}" alt="Idée de cadeau" style="max-width: 300px; border: 1px solid #ccc; border-radius: 5px;">
-                         </div>`
-                      : ''
-                  }
-                  <p style="margin-top: 20px;">Amusez-vous bien et bonnes fêtes ! 🎄</p>
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff; border: 1px solid #dddddd; border-radius: 10px;">
+                  <header style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid #eeeeee;">
+                    <h1 style="color: #2c3e50; font-size: 24px; margin: 0;">🎅 Votre Secret Santa 🎁</h1>
+                    <p style="color: #7f8c8d; font-size: 16px; margin: 0;">Une surprise vous attend cette année !</p>
+                  </header>
+                  <main style="padding: 20px 0;">
+                    <p style="color: #34495e; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+                      Bonjour <strong>${people[i].name}</strong>,
+                    </p>
+                    <p style="color: #34495e; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+                      Vous avez tirer au sort :
+                    </p>
+                    <div style="text-align: center; margin: 20px 0; padding: 20px; background-color: #f4f6f7; border-radius: 10px; border: 1px solid #cccccc;">
+                      <h2 style="color: #2c3e50; font-size: 20px; margin: 0;">🎁 ${shuffled[i].name} 🎁</h2>
+                      <p style="color: #7f8c8d; font-size: 14px; margin: 10px 0;">Voici quelques idées de cadeaux renseigné par ${shuffled[i].name} : </p>
+                      <p style="color: #2c3e50; font-size: 16px; font-style: italic;">"${shuffled[i].giftIdeas || 'Aucune idée spécifique fournie'}"</p>
+                      ${
+                        shuffled[i].imageUrl
+                          ? `<div style="margin-top: 20px;">
+                               <img src="${shuffled[i].imageUrl}" alt="Idée de cadeau" style="max-width: 100%; height: auto; border-radius: 5px; border: 1px solid #ddd;">
+                             </div>`
+                          : ''
+                      }
+                    </div>
+                  </main>
+                  <footer style="text-align: center; padding-top: 20px; border-top: 1px solid #eeeeee; margin-top: 20px;">
+                    <p style="color: #95a5a6; font-size: 14px; margin: 0;">
+                      Merci de votre participation à ${edition.name}. Et joyeuses fêtes ! 🎉
+                    </p>
+                  </footer>
                 </div>
               `,
             });
