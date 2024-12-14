@@ -7,7 +7,16 @@ import { Card } from "@/components/ui/card";
 import { Gift, Plus, Trash2, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 
 export default function Home() {
   const [editionName, setEditionName] = useState("");
@@ -82,19 +91,19 @@ export default function Home() {
           </p>
         </div>
 
-        <AlertDialog open={showWarningModal} onOpenChange={() => setShowWarningModal(false)}>
-          <AlertDialogTrigger>
-            <Button onClick={() => setShowWarningModal(true)} style={{ display: 'none' }}>Open</Button>
-          </AlertDialogTrigger>
+        <AlertDialog open={showWarningModal} onOpenChange={setShowWarningModal}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Avertissement</AlertDialogTitle>
               <AlertDialogDescription>
-                Vous devez ajouter au moins 3 participants pour créer l'événement.
+                Vous devez ajouter au moins 3 participants pour créer
+                l'événement.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setShowWarningModal(false)}>Fermer</AlertDialogCancel>
+              <AlertDialogCancel onClick={() => setShowWarningModal(false)}>
+                Fermer
+              </AlertDialogCancel>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -149,10 +158,7 @@ export default function Home() {
               </Button>
             </div>
 
-            <Button
-              onClick={handleSubmit}
-              className="w-full"
-            >
+            <Button onClick={handleSubmit} className="w-full">
               {isSubmitting ? (
                 <Loader2 className="animate-spin h-5 w-5 text-white" />
               ) : (
