@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Gift, Mail, Image as ImageIcon, Check } from "lucide-react";
 import { Person } from "@prisma/client";
+import { Share } from "lucide-react";
 
 import {
   Dialog,
@@ -130,6 +131,24 @@ export default function EditionPage({ params }: { params: { id: string } }) {
     }
   };
 
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/edition/${params.id}`;
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast({
+        title: "Lien copié",
+        description: "Le lien a été copié dans votre presse-papiers.",
+      });
+    } catch (error) {
+      console.error("Erreur lors de la copie :", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de copier le lien.",
+      });
+    }
+  };
+
   const handleDraw = async () => {
     if (!isReadyToDraw) {
       setShowWarningModal(true);
@@ -197,13 +216,14 @@ export default function EditionPage({ params }: { params: { id: string } }) {
           <AlertDialogHeader>
             <AlertDialogTitle>Avertissement</AlertDialogTitle>
             <AlertDialogDescription>
-              Toutes les personnes n'ont pas renseigné leurs informations, merci
-              de renseigner tout le monde.
+              Certaines personnes n'ont pas encore complété leurs informations.
+              Veuillez vous assurer que tous les participants sont correctement
+              renseignés avant de continuer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction onClick={() => setShowWarningModal(false)}>
-              Continuer
+              J'ai compris
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -215,18 +235,19 @@ export default function EditionPage({ params }: { params: { id: string } }) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmation</AlertDialogTitle>
+            <AlertDialogTitle>Confirmer l'envoi</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir envoyer les résultats ? Cette action est
-              irréversible.
+              En confirmant, le tirage au sort sera effectué, et les résultats
+              seront envoyés par e-mail à tous les participants. Cette action
+              est irréversible. Souhaitez-vous continuer ?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setShowConfirmationModal(false)}>
-              Non
+              Annuler
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleDrawConfirmed}>
-              Oui
+              Confirmer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -272,17 +293,28 @@ export default function EditionPage({ params }: { params: { id: string } }) {
               </div>
 
               {edition?.status === "PENDING" && (
-                <Button
-                  className="w-full mt-6"
-                  onClick={handleDraw}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="animate-spin h-5 w-5 text-white" />
-                  ) : (
-                    "Envoyer les résultats par e-mail"
-                  )}
-                </Button>
+                <>
+                  <Button
+                    onClick={handleShare}
+                    variant="outline"
+                    className="flex items-center mt-4 justify-center w-full"
+                    disabled={isSubmitting}
+                  >
+                    <Share className="mr-2 h-4 w-4" />
+                    Copier le lien du Secret Santa
+                  </Button>
+                  <Button
+                    className="w-full mt-6"
+                    onClick={handleDraw}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="animate-spin h-5 w-5 text-white" />
+                    ) : (
+                      "Clôturer et envoyer les résultats du tirage"
+                    )}
+                  </Button>
+                </>
               )}
             </Card>
           </div>
