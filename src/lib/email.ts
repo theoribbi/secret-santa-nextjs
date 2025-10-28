@@ -2,19 +2,16 @@ import * as nodemailer from 'nodemailer'
 import * as fs from 'fs'
 import * as path from 'path'
 
-// SMTP transport
+// SMTP transport - CONFIGURATION IDENTIQUE AU TEST QUI MARCHE
 const createTransporter = () => {
-  const isProduction = process.env.NODE_ENV === 'production'
-  const hasProductionConfig = process.env.SMTP_HOST && process.env.SMTP_HOST !== 'mailhog'
-  
   return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'localhost',
-    port: parseInt(process.env.SMTP_PORT || (isProduction || hasProductionConfig ? '587' : '1025')),
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '587'),
     secure: process.env.SMTP_SECURE === 'true',
-    auth: (process.env.SMTP_USER && process.env.SMTP_PASS) ? {
+    auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
-    } : undefined,
+    },
   })
 }
 
@@ -58,7 +55,7 @@ export async function sendEmail(options: EmailOptions) {
     const transporter = createTransporter()
     
     const mailOptions = {
-      from: `${process.env.SMTP_FROM_NAME || 'Secret Santa'} <${process.env.SMTP_FROM_EMAIL || 'noreply@secretsanta.local'}>`,
+      from: `${process.env.SMTP_FROM_NAME || 'Secret Santa Test'} <${process.env.SMTP_FROM_EMAIL}>`,
       to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
       subject: options.subject,
       html: options.html,
