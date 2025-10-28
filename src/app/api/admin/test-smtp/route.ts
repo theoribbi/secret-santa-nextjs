@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import nodemailer from 'nodemailer'
+import * as nodemailer from 'nodemailer'
 
 interface TestResult {
   success: boolean
@@ -119,7 +119,7 @@ async function checkConfiguration(): Promise<TestResult> {
 
 async function testConnection(results: TestResult[]): Promise<nodemailer.Transporter | null> {
   try {
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT || '587'),
       secure: process.env.SMTP_SECURE === 'true',
