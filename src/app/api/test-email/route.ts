@@ -32,6 +32,17 @@ export async function POST(request: NextRequest) {
           'Secret Santa Équipe Test',
           'Marie Martin',
           'Un livre de cuisine ou des ustensiles de pâtisserie',
+          '/uploads/gift-test-image.jpg'
+        )
+        subject = emailContent.subject
+        break
+
+      case 'assignment-external':
+        emailContent = createAssignmentNotificationEmail(
+          'Jean Dupont',
+          'Secret Santa Équipe Test',
+          'Marie Martin',
+          'Un livre de cuisine ou des ustensiles de pâtisserie',
           'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=300&h=200&fit=crop'
         )
         subject = emailContent.subject
@@ -109,7 +120,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   return NextResponse.json({
-    message: 'API de test d\'email - Utilisez POST avec { "to": "email@example.com", "type": "simple|invitation|assignment|event-link" }',
+    message: 'API de test d\'email - Utilisez POST avec { "to": "email@example.com", "type": "simple|invitation|assignment|assignment-external|event-link" }',
     mailhogUrl: `http://localhost:${process.env.MAILHOG_WEB_PORT || 8025}`,
     smtpConfig: {
       host: process.env.SMTP_HOST,

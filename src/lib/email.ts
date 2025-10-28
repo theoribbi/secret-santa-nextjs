@@ -120,6 +120,11 @@ export function createAssignmentNotificationEmail(
   // Convertir le chemin d'image en URL complète pour l'email
   const fullImageUrl = getFullImageUrl(receiverGiftImage)
   
+  // Log pour debug (affichage de la transformation)
+  if (receiverGiftImage && fullImageUrl !== receiverGiftImage) {
+    console.log(`📧 Image URL transformée : ${receiverGiftImage} → ${fullImageUrl}`)
+  }
+  
   const html = loadTemplate('assignment', {
     personName,
     eventName,
