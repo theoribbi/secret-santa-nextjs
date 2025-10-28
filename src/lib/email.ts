@@ -4,11 +4,14 @@ import * as path from 'path'
 
 // SMTP transport
 const createTransporter = () => {
+  const isProduction = process.env.NODE_ENV === 'production'
+  const hasProductionConfig = process.env.SMTP_HOST && process.env.SMTP_HOST !== 'mailhog'
+  
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'localhost',
-    port: Number(process.env.SMTP_PORT) || 1025,
+    port: parseInt(process.env.SMTP_PORT || (isProduction || hasProductionConfig ? '587' : '1025')),
     secure: process.env.SMTP_SECURE === 'true',
-    auth: process.env.SMTP_USER ? {
+    auth: (process.env.SMTP_USER && process.env.SMTP_PASS) ? {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     } : undefined,
