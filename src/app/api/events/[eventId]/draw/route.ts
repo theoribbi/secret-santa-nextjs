@@ -142,7 +142,7 @@ async function sendAssignmentEmails(eventId: string) {
     const results = await Promise.all(emailPromises)
     const successCount = results.filter(r => r.success).length
     
-    console.log(`📧 Emails d'assignation: ${successCount}/${assignmentDetails.length} envoyés avec succès`)
+    console.log(`📧 Emails d'assignation: ${successCount}/${allAssignments.length} envoyés avec succès`)
 
   } catch (error) {
     console.error('Erreur lors de l\'envoi des emails d\'assignation:', error)
