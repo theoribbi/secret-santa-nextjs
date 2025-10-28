@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - NODE_ENV=${NODE_ENV}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+    env_file:
+      - .env
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    env_file:
+      - .env
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  drizzle-studio:
+    image: ghcr.io/drizzle-team/gateway:latest
+    container_name: drizzle-gateway
+    restart: always
+    ports:
+      - "${STUDIO_PORT:-4983}:4983"
+    environment:
+      - PORT=4983
+      - STORE_PATH=/app
+      - MASTERPASS=${STUDIO_MASTER_PASSWORD:-drizzle123}
+    volumes:
+      - drizzle_gateway:/app
+    depends_on:
+      - db
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: secret-santa-mailhog
+    restart: always
+    ports:
+      - "${MAILHOG_SMTP_PORT:-1025}:1025"  # SMTP port
+      - "${MAILHOG_WEB_PORT:-8025}:8025"   # Web interface
+    environment:
+      - MH_STORAGE=memory
+
+volumes:
+  postgres_data:
+  drizzle_gateway:
