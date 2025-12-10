@@ -52,6 +52,9 @@ export default function JoinEventPage() {
     giftImage: ''
   })
 
+  // État pour bloquer l'envoi pendant l'upload d'image
+  const [isImageUploading, setIsImageUploading] = useState(false)
+
   // États pour la gestion des doublons d'emails
   const [duplicateDialog, setDuplicateDialog] = useState({
     open: false,
@@ -392,15 +395,18 @@ export default function JoinEventPage() {
                 <ImageUpload
                   currentImage={formData.giftImage}
                   onImageUploaded={(url) => setFormData(prev => ({ ...prev, giftImage: url }))}
+                  onUploadingChange={setIsImageUploading}
                   label="Photo de votre idée cadeau (optionnel)"
                 />
 
-                <Button type="submit" className="w-full" disabled={isJoining}>
-                  {isJoining 
-                    ? 'Enregistrement...' 
-                    : isInvited 
-                      ? 'Enregistrer mon idée cadeau'
-                      : 'Rejoindre le Secret Santa'
+                <Button type="submit" className="w-full" disabled={isJoining || isImageUploading}>
+                  {isImageUploading
+                    ? 'Upload de l\'image en cours...'
+                    : isJoining 
+                      ? 'Enregistrement...' 
+                      : isInvited 
+                        ? 'Enregistrer mon idée cadeau'
+                        : 'Rejoindre le Secret Santa'
                   }
                 </Button>
               </form>

@@ -9,6 +9,7 @@ import imageCompression from 'browser-image-compression'
 
 interface ImageUploadProps {
   onImageUploaded: (imageUrl: string) => void
+  onUploadingChange?: (isUploading: boolean) => void
   currentImage?: string
   label?: string
   className?: string
@@ -16,12 +17,20 @@ interface ImageUploadProps {
 
 export default function ImageUpload({ 
   onImageUploaded, 
+  onUploadingChange,
   currentImage, 
   label = "Image du cadeau (optionnel)",
   className = ""
 }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false)
   const [isCompressing, setIsCompressing] = useState(false)
+  
+  // Notifier le parent quand l'état d'upload change
+  const setUploadingState = (uploading: boolean, compressing: boolean) => {
+    setIsUploading(uploading)
+    setIsCompressing(compressing)
+    onUploadingChange?.(uploading || compressing)
+  }
   const [error, setError] = useState('')
   const [preview, setPreview] = useState<string>(currentImage || '')
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -46,7 +55,7 @@ export default function ImageUpload({
         return
       }
 
-      setIsCompressing(true)
+      setUploadingState(false, true)
 
       // Options de compression
       const options = {
@@ -64,8 +73,7 @@ export default function ImageUpload({
       
       console.log(`✅ Image compressée: ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`)
       
-      setIsCompressing(false)
-      setIsUploading(true)
+      setUploadingState(true, false)
 
       // Créer preview local
       const previewUrl = URL.createObjectURL(compressedFile)
@@ -108,8 +116,7 @@ export default function ImageUpload({
       setPreview(currentImage || '')
       
     } finally {
-      setIsCompressing(false)
-      setIsUploading(false)
+      setUploadingState(false, false)
       
       // Reset l'input
       if (fileInputRef.current) {
