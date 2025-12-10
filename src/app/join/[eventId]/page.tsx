@@ -130,7 +130,7 @@ export default function JoinEventPage() {
     setError('')
 
     if (!formData.giftIdea?.trim()) {
-      setError('Merci d'indiquer une idée de cadeau (obligatoire).')
+      setError('Merci d\'indiquer une idée de cadeau (obligatoire).')
       setIsJoining(false)
       return
     }
@@ -171,7 +171,7 @@ export default function JoinEventPage() {
     setError('')
 
     if (!dataToSubmit.giftIdea?.trim()) {
-      setError('Merci d'indiquer une idée de cadeau (obligatoire).')
+      setError('Merci d\'indiquer une idée de cadeau (obligatoire).')
       setIsJoining(false)
       return
     }
