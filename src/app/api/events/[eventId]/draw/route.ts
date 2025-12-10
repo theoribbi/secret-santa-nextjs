@@ -109,19 +109,25 @@ async function sendAssignmentEmails(eventId: string) {
 
     console.log(`Envoi de ${allAssignments.length} emails d'assignation pour l'événement ${event.name}`)
 
-    // Envoyer les emails et mettre à jour le statut en DB
-    const emailPromises = allAssignments.map(async (assignment) => {
+    // Helper pour attendre entre les envois (Resend limite à 2 req/sec)
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+    // Envoyer les emails séquentiellement pour respecter le rate limit Resend
+    const results: Array<{ success: boolean; error?: string }> = []
+    
+    for (let i = 0; i < allAssignments.length; i++) {
+      const assignment = allAssignments[i]
       const giver = personsMap.get(assignment.giverId)
       const receiver = personsMap.get(assignment.receiverId)
 
       if (!giver || !receiver) {
         console.error(`Personne manquante pour assignation: giver=${assignment.giverId}, receiver=${assignment.receiverId}`)
-        // Enregistrer l'erreur dans la DB
         await db
           .update(assignments)
           .set({ emailError: 'Personne manquante (giver ou receiver)' })
           .where(eq(assignments.id, assignment.id))
-        return { success: false, error: 'Personne manquante' }
+        results.push({ success: false, error: 'Personne manquante' })
+        continue
       }
 
       try {
@@ -140,8 +146,7 @@ async function sendAssignmentEmails(eventId: string) {
         })
 
         if (result.success) {
-          console.log(`✅ Email d'assignation envoyé à ${giver.name} (${giver.email}) - ID: ${result.messageId}`)
-          // Enregistrer le succès dans la DB
+          console.log(`✅ Email ${i + 1}/${allAssignments.length} envoyé à ${giver.name} (${giver.email}) - ID: ${result.messageId}`)
           await db
             .update(assignments)
             .set({
@@ -152,30 +157,30 @@ async function sendAssignmentEmails(eventId: string) {
             .where(eq(assignments.id, assignment.id))
         } else {
           console.error(`❌ Échec envoi email à ${giver.name}:`, result.error)
-          // Enregistrer l'erreur dans la DB
           await db
             .update(assignments)
             .set({ emailError: result.error || 'Erreur inconnue' })
             .where(eq(assignments.id, assignment.id))
         }
 
-        return result
+        results.push(result)
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue'
         console.error(`❌ Erreur envoi email à ${giver.name}:`, error)
-        // Enregistrer l'erreur dans la DB
         await db
           .update(assignments)
           .set({ emailError: errorMessage })
           .where(eq(assignments.id, assignment.id))
-        return { success: false, error: errorMessage }
+        results.push({ success: false, error: errorMessage })
       }
-    })
 
-    // Attendre tous les envois
-    const results = await Promise.all(emailPromises)
+      // Attendre 600ms entre chaque email (pour respecter la limite de 2/sec avec marge)
+      if (i < allAssignments.length - 1) {
+        await delay(600)
+      }
+    }
+
     const successCount = results.filter(r => r.success).length
-    
     console.log(`📧 Emails d'assignation: ${successCount}/${allAssignments.length} envoyés avec succès`)
 
   } catch (error) {
