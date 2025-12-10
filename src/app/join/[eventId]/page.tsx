@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -23,12 +23,15 @@ interface Person {
   name: string
   email: string
   giftIdea?: string
+  giftImage?: string
 }
 
 export default function JoinEventPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const eventId = params.eventId as string
+  const invitedEmail = searchParams.get('email')
   
   const [event, setEvent] = useState<Event | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -37,6 +40,10 @@ export default function JoinEventPage() {
   const [success, setSuccess] = useState('')
   const [hasJoined, setHasJoined] = useState(false)
   const [userAssignment, setUserAssignment] = useState<Person | null>(null)
+
+  // Mode invitation : personne déjà créée par l'organisateur
+  const [isInvited, setIsInvited] = useState(false)
+  const [existingPerson, setExistingPerson] = useState<Person | null>(null)
 
   const [formData, setFormData] = useState({
     name: '',
@@ -57,6 +64,13 @@ export default function JoinEventPage() {
     loadEvent()
   }, [eventId])
 
+  // Charger la personne invitée si email dans l'URL
+  useEffect(() => {
+    if (invitedEmail && event) {
+      loadInvitedPerson(invitedEmail)
+    }
+  }, [invitedEmail, event])
+
   const loadEvent = async () => {
     try {
       const response = await fetch('/api/events')
@@ -72,9 +86,84 @@ export default function JoinEventPage() {
     }
   }
 
+  const loadInvitedPerson = async (email: string) => {
+    try {
+      const response = await fetch(`/api/events/${eventId}/persons?email=${encodeURIComponent(email)}`)
+      if (response.ok) {
+        const person = await response.json()
+        setExistingPerson(person)
+        setIsInvited(true)
+        setFormData({
+          name: person.name,
+          email: person.email,
+          giftIdea: person.giftIdea || '',
+          giftImage: person.giftImage || ''
+        })
+        
+        // Si la personne a déjà complété son profil
+        if (person.giftIdea) {
+          setHasJoined(true)
+          setSuccess('Vous êtes déjà inscrit à cet événement.')
+          checkForAssignment(person.email)
+        }
+      }
+    } catch (err) {
+      // Email pas trouvé, mode normal
+      setIsInvited(false)
+    }
+  }
+
   const handleJoinEvent = async (e: React.FormEvent) => {
     e.preventDefault()
-    await joinEventWithData(formData, false)
+    
+    if (isInvited) {
+      // Mode mise à jour
+      await updatePerson()
+    } else {
+      // Mode création
+      await joinEventWithData(formData, false)
+    }
+  }
+
+  const updatePerson = async () => {
+    setIsJoining(true)
+    setError('')
+
+    if (!formData.giftIdea?.trim()) {
+      setError('Merci d'indiquer une idée de cadeau (obligatoire).')
+      setIsJoining(false)
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/events/${eventId}/persons`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          giftIdea: formData.giftIdea,
+          giftImage: formData.giftImage
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Erreur lors de la mise à jour')
+      }
+
+      setSuccess('Parfait ! Vos informations ont été enregistrées.')
+      setHasJoined(true)
+      checkForAssignment(formData.email)
+      
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError('Une erreur inattendue est survenue. Veuillez réessayer.')
+      }
+    } finally {
+      setIsJoining(false)
+    }
   }
 
   const joinEventWithData = async (dataToSubmit: any, force: boolean = false) => {
@@ -82,7 +171,7 @@ export default function JoinEventPage() {
     setError('')
 
     if (!dataToSubmit.giftIdea?.trim()) {
-      setError('Merci d’indiquer une idée de cadeau (obligatoire).')
+      setError('Merci d'indiquer une idée de cadeau (obligatoire).')
       setIsJoining(false)
       return
     }
@@ -116,20 +205,16 @@ export default function JoinEventPage() {
         throw new Error(errorData.error || 'Erreur lors de l\'inscription')
       }
 
-      const newPerson = await response.json()
-      setSuccess('🎉 Inscription réussie ! Vous participez maintenant au Secret Santa.')
+      setSuccess('Inscription réussie ! Vous participez maintenant au Secret Santa.')
       setHasJoined(true)
-
-      // Essayer de récupérer l'assignation si le tirage a déjà eu lieu
-      setTimeout(checkForAssignment, 1000)
+      setTimeout(() => checkForAssignment(dataToSubmit.email), 1000)
       
     } catch (err) {
       if (err instanceof Error) {
-        // Personnaliser certains messages d'erreur
         if (err.message.includes('email') && err.message.includes('valide')) {
-          setError('📧 Veuillez saisir une adresse email valide')
+          setError('Veuillez saisir une adresse email valide')
         } else if (err.message.includes('nom') && err.message.includes('obligatoire')) {
-          setError('👤 Le nom est obligatoire')
+          setError('Le nom est obligatoire')
         } else {
           setError(err.message)
         }
@@ -163,9 +248,9 @@ export default function JoinEventPage() {
     setIsJoining(false)
   }
 
-  const checkForAssignment = async () => {
+  const checkForAssignment = async (email: string) => {
     try {
-      const response = await fetch(`/api/persons/${formData.email}/assignment?eventId=${eventId}`)
+      const response = await fetch(`/api/persons/${email}/assignment?eventId=${eventId}`)
       if (response.ok) {
         const data = await response.json()
         setUserAssignment(data.receiver)
@@ -186,8 +271,8 @@ export default function JoinEventPage() {
 
   if (!event) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card>
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-green-50 flex items-center justify-center p-4">
+        <Card className="max-w-md">
           <CardHeader>
             <CardTitle>Événement non trouvé</CardTitle>
             <CardDescription>
@@ -211,13 +296,13 @@ export default function JoinEventPage() {
         {/* En-tête événement */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            🎅 Rejoindre le Secret Santa
+            {isInvited ? 'Compléter votre inscription' : 'Rejoindre le Secret Santa'}
           </h1>
           <Card>
             <CardHeader>
               <CardTitle>{event.name}</CardTitle>
               <CardDescription>
-                📅 {new Date(event.date).toLocaleDateString('fr-FR', {
+                {new Date(event.date).toLocaleDateString('fr-FR', {
                   weekday: 'long',
                   year: 'numeric',
                   month: 'long',
@@ -239,34 +324,48 @@ export default function JoinEventPage() {
         {!hasJoined ? (
           <Card>
             <CardHeader>
-              <CardTitle>Participer à l'événement</CardTitle>
+              <CardTitle>
+                {isInvited ? 'Ajoutez votre idée cadeau' : 'Participer à l\'événement'}
+              </CardTitle>
               <CardDescription>
-                Remplissez vos informations pour rejoindre le Secret Santa
+                {isInvited 
+                  ? 'L\'organisateur vous a ajouté. Complétez votre profil avec votre idée cadeau.'
+                  : 'Remplissez vos informations pour rejoindre le Secret Santa'
+                }
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleJoinEvent} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Votre nom *</Label>
+                  <Label htmlFor="name">Votre nom {!isInvited && '*'}</Label>
                   <Input
                     id="name"
                     placeholder="Ex: Jean Dupont"
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    required
+                    required={!isInvited}
+                    disabled={isInvited}
+                    className={isInvited ? 'bg-gray-100 cursor-not-allowed' : ''}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Votre email *</Label>
+                  <Label htmlFor="email">Votre email {!isInvited && '*'}</Label>
                   <Input
                     id="email"
                     type="email"
                     placeholder="jean.dupont@example.com"
                     value={formData.email}
                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    required
+                    required={!isInvited}
+                    disabled={isInvited}
+                    className={isInvited ? 'bg-gray-100 cursor-not-allowed' : ''}
                   />
+                  {isInvited && (
+                    <p className="text-sm text-gray-500">
+                      Ces informations ont été renseignées par l'organisateur.
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -280,7 +379,7 @@ export default function JoinEventPage() {
                     required
                   />
                   <p className="text-sm text-gray-500">
-                    Obligatorie. L’image est optionnelle, mais l’idée doit être renseignée.
+                    Cette information aidera la personne qui vous tirera au sort.
                   </p>
                 </div>
 
@@ -291,7 +390,12 @@ export default function JoinEventPage() {
                 />
 
                 <Button type="submit" className="w-full" disabled={isJoining}>
-                  {isJoining ? 'Inscription en cours...' : '🎁 Rejoindre le Secret Santa'}
+                  {isJoining 
+                    ? 'Enregistrement...' 
+                    : isInvited 
+                      ? 'Enregistrer mon idée cadeau'
+                      : 'Rejoindre le Secret Santa'
+                  }
                 </Button>
               </form>
             </CardContent>
@@ -308,7 +412,7 @@ export default function JoinEventPage() {
             {userAssignment ? (
               <Card>
                 <CardHeader>
-                  <CardTitle>🎯 Votre mission</CardTitle>
+                  <CardTitle>Votre mission</CardTitle>
                   <CardDescription>
                     Le tirage au sort a déjà eu lieu ! Voici à qui vous devez offrir un cadeau :
                   </CardDescription>
@@ -319,20 +423,20 @@ export default function JoinEventPage() {
                     <p className="text-gray-600">{userAssignment.email}</p>
                     {userAssignment.giftIdea && (
                       <div className="mt-3">
-                        <p className="font-medium text-green-700">💡 Idée de cadeau :</p>
+                        <p className="font-medium text-green-700">Idée de cadeau :</p>
                         <p className="text-gray-700">{userAssignment.giftIdea}</p>
                       </div>
                     )}
                   </div>
                   <p className="text-sm text-gray-500 mt-3">
-                    Gardez cette information secrète ! 🤫
+                    Gardez cette information secrète !
                   </p>
                 </CardContent>
               </Card>
             ) : (
               <Card>
                 <CardHeader>
-                  <CardTitle>⏳ En attente du tirage au sort</CardTitle>
+                  <CardTitle>En attente du tirage au sort</CardTitle>
                   <CardDescription>
                     L'organisateur n'a pas encore effectué le tirage au sort. 
                     Vous recevrez votre assignation par email une fois que ce sera fait.
@@ -340,7 +444,7 @@ export default function JoinEventPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-gray-500">
-                    Revenez sur cette page plus tard ou attendez la notification par email.
+                    Vous pouvez fermer cette page. Un email vous sera envoyé avec votre mission.
                   </p>
                 </CardContent>
               </Card>

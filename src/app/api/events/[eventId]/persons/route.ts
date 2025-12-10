@@ -106,8 +106,8 @@ export async function POST(
     let confirmationSent = false
 
     if (shouldSendInvitation && hasResendKey) {
-      // Créer l'URL de participation
-      const joinUrl = `${baseUrl}/join/${eventId}`
+      // Créer l'URL de participation avec l'email pré-rempli
+      const joinUrl = `${baseUrl}/join/${eventId}?email=${encodeURIComponent(newPerson.email)}`
       
       // Créer et envoyer l'email d'invitation
       const emailContent = createEventInvitationEmail(
@@ -205,11 +205,36 @@ export async function POST(
 }
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
     const { eventId } = await params
+    const { searchParams } = new URL(request.url)
+    const emailParam = searchParams.get('email')
+
+    // Si un email est fourni, retourner uniquement cette personne
+    if (emailParam) {
+      const [person] = await db
+        .select()
+        .from(persons)
+        .where(and(
+          eq(persons.eventId, eventId),
+          eq(persons.email, emailParam.toLowerCase())
+        ))
+        .limit(1)
+
+      if (!person) {
+        return NextResponse.json(
+          { error: 'Participant non trouvé' },
+          { status: 404 }
+        )
+      }
+
+      return NextResponse.json(person)
+    }
+
+    // Sinon retourner tous les participants
     const eventPersons = await db
       .select()
       .from(persons)
@@ -220,6 +245,91 @@ export async function GET(
     console.error('Erreur récupération personnes:', error)
     return NextResponse.json(
       { error: 'Erreur lors de la récupération des personnes' },
+      { status: 500 }
+    )
+  }
+}
+
+// PATCH: Mettre à jour une personne existante (compléter son profil)
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ eventId: string }> }
+) {
+  try {
+    const { eventId } = await params
+    const body = await request.json()
+    const { email, giftIdea, giftImage } = body
+
+    if (!email?.trim()) {
+      return NextResponse.json(
+        { error: 'L\'email est obligatoire' },
+        { status: 400 }
+      )
+    }
+
+    // Vérifier que la personne existe
+    const [existingPerson] = await db
+      .select()
+      .from(persons)
+      .where(and(
+        eq(persons.eventId, eventId),
+        eq(persons.email, email.trim().toLowerCase())
+      ))
+      .limit(1)
+
+    if (!existingPerson) {
+      return NextResponse.json(
+        { error: 'Participant non trouvé pour cet événement' },
+        { status: 404 }
+      )
+    }
+
+    // Mettre à jour la personne
+    const [updatedPerson] = await db
+      .update(persons)
+      .set({
+        giftIdea: giftIdea?.trim() || existingPerson.giftIdea,
+        giftImage: giftImage?.trim() || existingPerson.giftImage,
+        updatedAt: new Date(),
+      })
+      .where(eq(persons.id, existingPerson.id))
+      .returning()
+
+    // Envoyer l'email de confirmation si configuré
+    const hasResendKey = Boolean(process.env.RESEND_API_KEY)
+    
+    if (hasResendKey && (giftIdea || giftImage)) {
+      const [event] = await db
+        .select()
+        .from(events)
+        .where(eq(events.id, eventId))
+        .limit(1)
+
+      if (event) {
+        const confirmationContent = createJoinConfirmationEmail(
+          updatedPerson.name,
+          event.name,
+          new Date(event.date),
+          updatedPerson.giftIdea || undefined,
+          updatedPerson.giftImage || undefined
+        )
+
+        await sendEmail({
+          to: updatedPerson.email,
+          subject: confirmationContent.subject,
+          html: confirmationContent.html
+        })
+      }
+    }
+
+    return NextResponse.json({
+      ...updatedPerson,
+      updated: true
+    })
+  } catch (error) {
+    console.error('Erreur mise à jour personne:', error)
+    return NextResponse.json(
+      { error: 'Erreur lors de la mise à jour du participant' },
       { status: 500 }
     )
   }
