@@ -109,13 +109,18 @@ async function sendAssignmentEmails(eventId: string) {
 
     console.log(`Envoi de ${allAssignments.length} emails d'assignation pour l'événement ${event.name}`)
 
-    // Envoyer les emails en parallèle
+    // Envoyer les emails et mettre à jour le statut en DB
     const emailPromises = allAssignments.map(async (assignment) => {
       const giver = personsMap.get(assignment.giverId)
       const receiver = personsMap.get(assignment.receiverId)
 
       if (!giver || !receiver) {
         console.error(`Personne manquante pour assignation: giver=${assignment.giverId}, receiver=${assignment.receiverId}`)
+        // Enregistrer l'erreur dans la DB
+        await db
+          .update(assignments)
+          .set({ emailError: 'Personne manquante (giver ou receiver)' })
+          .where(eq(assignments.id, assignment.id))
         return { success: false, error: 'Personne manquante' }
       }
 
@@ -135,15 +140,35 @@ async function sendAssignmentEmails(eventId: string) {
         })
 
         if (result.success) {
-          console.log(`✅ Email d'assignation envoyé à ${giver.name} (${giver.email})`)
+          console.log(`✅ Email d'assignation envoyé à ${giver.name} (${giver.email}) - ID: ${result.messageId}`)
+          // Enregistrer le succès dans la DB
+          await db
+            .update(assignments)
+            .set({
+              emailSentAt: new Date(),
+              emailResendId: result.messageId || null,
+              emailError: null
+            })
+            .where(eq(assignments.id, assignment.id))
         } else {
           console.error(`❌ Échec envoi email à ${giver.name}:`, result.error)
+          // Enregistrer l'erreur dans la DB
+          await db
+            .update(assignments)
+            .set({ emailError: result.error || 'Erreur inconnue' })
+            .where(eq(assignments.id, assignment.id))
         }
 
         return result
       } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue'
         console.error(`❌ Erreur envoi email à ${giver.name}:`, error)
-        return { success: false, error: error instanceof Error ? error.message : 'Erreur inconnue' }
+        // Enregistrer l'erreur dans la DB
+        await db
+          .update(assignments)
+          .set({ emailError: errorMessage })
+          .where(eq(assignments.id, assignment.id))
+        return { success: false, error: errorMessage }
       }
     })
 

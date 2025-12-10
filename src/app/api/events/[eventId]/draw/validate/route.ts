@@ -85,6 +85,31 @@ export async function GET(
       issues.push('Des paires réciproques ont été détectées (A tire B et B tire A).')
     }
 
+    // Vérification des emails envoyés
+    const emailsSent = allAssignments.filter((a) => a.emailSentAt !== null)
+    const emailsFailed = allAssignments
+      .filter((a) => a.emailError !== null)
+      .map((a) => {
+        const giver = personMap.get(a.giverId)
+        return {
+          assignmentId: a.id,
+          giverName: giver?.name || a.giverId,
+          giverEmail: giver?.email || 'inconnu',
+          error: a.emailError,
+          resendId: a.emailResendId,
+        }
+      })
+    const emailsPending = allAssignments.filter(
+      (a) => a.emailSentAt === null && a.emailError === null
+    )
+
+    if (emailsFailed.length > 0) {
+      issues.push(`${emailsFailed.length} email(s) n'ont pas pu être envoyés.`)
+    }
+    if (emailsPending.length > 0) {
+      issues.push(`${emailsPending.length} email(s) sont en attente d'envoi.`)
+    }
+
     const ok =
       issues.length === 0 &&
       unassignedGivers.length === 0 &&
@@ -102,6 +127,12 @@ export async function GET(
         receiversMissing,
         receiversMulti,
         reciprocalPairs,
+        emails: {
+          sent: emailsSent.length,
+          failed: emailsFailed.length,
+          pending: emailsPending.length,
+          failedDetails: emailsFailed,
+        },
       },
     })
   } catch (error) {

@@ -30,6 +30,10 @@ export const assignments = pgTable('assignments', {
   receiverId: uuid('receiver_id').notNull().references(() => persons.id, { onDelete: 'cascade' }),
   eventId: uuid('event_id').notNull().references(() => events.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  // Tracking email
+  emailSentAt: timestamp('email_sent_at'),
+  emailResendId: varchar('email_resend_id', { length: 100 }),
+  emailError: text('email_error'),
 })
 
 // Relations
