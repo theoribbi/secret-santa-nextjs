@@ -2,17 +2,31 @@ import * as nodemailer from 'nodemailer'
 import * as fs from 'fs'
 import * as path from 'path'
 
-// SMTP transport - Configuration identique à test-smtp qui fonctionne
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true',
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  })
+// Singleton transporter pour réutiliser la connexion
+let transporter: nodemailer.Transporter | null = null
+
+const getTransporter = () => {
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+      // Timeouts pour éviter les blocages
+      connectionTimeout: 10000, // 10 secondes pour établir la connexion
+      greetingTimeout: 10000,   // 10 secondes pour le greeting SMTP
+      socketTimeout: 30000,     // 30 secondes pour les opérations socket
+      // Options TLS pour Infomaniak et autres providers
+      tls: {
+        rejectUnauthorized: true,
+        minVersion: 'TLSv1.2'
+      }
+    })
+  }
+  return transporter
 }
 
 interface EmailOptions {
@@ -52,7 +66,7 @@ function loadTemplate(templateName: string, variables: Record<string, any>): str
 
 export async function sendEmail(options: EmailOptions) {
   try {
-    const transporter = createTransporter()
+    const transporter = getTransporter()
     
     const mailOptions = {
       from: `${process.env.SMTP_FROM_NAME || 'Secret Santa Test'} <${process.env.SMTP_FROM_EMAIL}>`,
