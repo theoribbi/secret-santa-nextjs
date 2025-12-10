@@ -58,9 +58,11 @@ export default function EventManagePage() {
     pendingFormData: null as any
   })
 
-  const shareUrl = `${window.location.origin}/join/${eventId}`
+  // URL générée côté client uniquement (évite erreur SSR "window is not defined")
+  const [shareUrl, setShareUrl] = useState('')
 
   useEffect(() => {
+    setShareUrl(`${window.location.origin}/join/${eventId}`)
     loadEvent()
     loadPersons()
   // eslint-disable-next-line react-hooks/exhaustive-deps

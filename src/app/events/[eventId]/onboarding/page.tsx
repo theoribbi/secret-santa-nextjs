@@ -52,10 +52,14 @@ export default function OnboardingPage() {
     pendingFormData: null as any
   })
 
-  const shareUrl = `${window.location.origin}/join/${eventId}`
-  const eventUrl = `${window.location.origin}/events/${eventId}`
+  // URLs générées côté client uniquement (évite erreur SSR "window is not defined")
+  const [shareUrl, setShareUrl] = useState('')
+  const [eventUrl, setEventUrl] = useState('')
 
   useEffect(() => {
+    // Initialiser les URLs côté client
+    setShareUrl(`${window.location.origin}/join/${eventId}`)
+    setEventUrl(`${window.location.origin}/events/${eventId}`)
     loadEvent()
     loadPersons()
   // eslint-disable-next-line react-hooks/exhaustive-deps
