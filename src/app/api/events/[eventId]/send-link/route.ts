@@ -4,12 +4,28 @@ import { db } from '@/db'
 import { events } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 
+// Helper pour obtenir l'URL de base depuis les headers (fonctionne sur Vercel)
+function getBaseUrl(request: NextRequest): string {
+  // 1. Variable d'environnement serveur (runtime)
+  if (process.env.APP_URL) {
+    return process.env.APP_URL
+  }
+  // 2. Header Vercel (automatique)
+  const host = request.headers.get('x-forwarded-host') || request.headers.get('host')
+  const protocol = request.headers.get('x-forwarded-proto') || 'https'
+  if (host) {
+    return `${protocol}://${host}`
+  }
+  return 'http://localhost:3000'
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
     const { eventId } = await params
+    const baseUrl = getBaseUrl(request)
     const { email } = await request.json()
     const trimmedEmail = typeof email === 'string' ? email.trim() : ''
 
@@ -61,7 +77,7 @@ export async function POST(
     }
 
     // Créer l'URL de gestion
-    const eventUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/events/${eventId}`
+    const eventUrl = `${baseUrl}/events/${eventId}`
 
     // Créer l'email avec le template
     const emailContent = createEventLinkEmail(event.name, eventUrl)

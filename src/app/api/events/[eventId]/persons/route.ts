@@ -5,12 +5,29 @@ import { persons, events, type NewPerson } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { sendEmail, createEventInvitationEmail, createJoinConfirmationEmail } from '@/lib/email'
 
+// Helper pour obtenir l'URL de base depuis les headers (fonctionne sur Vercel)
+function getBaseUrl(request: NextRequest): string {
+  // 1. Variable d'environnement serveur (runtime)
+  if (process.env.APP_URL) {
+    return process.env.APP_URL
+  }
+  // 2. Header Vercel (automatique)
+  const host = request.headers.get('x-forwarded-host') || request.headers.get('host')
+  const protocol = request.headers.get('x-forwarded-proto') || 'https'
+  if (host) {
+    return `${protocol}://${host}`
+  }
+  // 3. Fallback
+  return 'http://localhost:3000'
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
     const { eventId } = await params
+    const baseUrl = getBaseUrl(request)
     const body = await request.json()
     const { name, email, giftIdea, giftImage, force, skipInvitationEmail, sendJoinConfirmation } = body
 
@@ -98,7 +115,7 @@ export async function POST(
 
     if (shouldSendInvitation && missingSmtp.length === 0) {
       // Créer l'URL de participation
-      const joinUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/join/${eventId}`
+      const joinUrl = `${baseUrl}/join/${eventId}`
       
       // Créer et envoyer l'email d'invitation
       const emailContent = createEventInvitationEmail(

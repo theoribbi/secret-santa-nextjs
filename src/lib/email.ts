@@ -94,8 +94,8 @@ function getFullImageUrl(imagePath: string | undefined): string | undefined {
     return imagePath
   }
   
-  // Construire l'URL complète selon l'environnement
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  // Construire l'URL complète - utiliser APP_URL (runtime serveur) ou NEXT_PUBLIC_APP_URL
+  const baseUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   return `${baseUrl}${imagePath.startsWith('/') ? imagePath : '/' + imagePath}`
 }
 
