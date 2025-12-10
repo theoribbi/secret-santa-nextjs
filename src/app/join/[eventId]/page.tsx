@@ -85,7 +85,12 @@ export default function JoinEventPage() {
       const response = await fetch(`/api/events/${eventId}/persons`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...dataToSubmit, force })
+        body: JSON.stringify({ 
+          ...dataToSubmit, 
+          force, 
+          skipInvitationEmail: true,
+          sendJoinConfirmation: true
+        })
       })
 
       if (!response.ok) {

@@ -1,39 +1,47 @@
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="text-align: center; background: linear-gradient(135deg, #fee2e2 0%, #dcfce7 100%); padding: 30px; border-radius: 10px; margin-bottom: 20px;">
-    <h1 style="color: #dc2626; font-size: 2.5rem; margin: 0;">🎯 Votre Mission</h1>
-    <h2 style="color: #15803d; margin: 10px 0;">Secret Santa "{{eventName}}"</h2>
-  </div>
-  
-  <div style="background: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-    <p style="font-size: 18px; color: #374151; margin-bottom: 20px;">
-      Bonjour {{personName}} 👋
+<div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 28px; color: #111827; background: #f8fafc;">
+  <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 28px; box-shadow: 0 10px 40px rgba(15, 23, 42, 0.08);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+      <div>
+        <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #6b7280; font-weight: 600;">Votre mission</div>
+        <h1 style="margin: 6px 0 0 0; font-size: 22px; font-weight: 700; color: #0f172a;">Secret Santa "{{eventName}}"</h1>
+      </div>
+      <div style="width: 44px; height: 44px; border-radius: 12px; background: #e0f2fe; display: flex; align-items: center; justify-content: center; color: #0ea5e9; font-weight: 700; font-size: 16px;">
+        SS
+      </div>
+    </div>
+
+    <p style="margin: 0 0 10px 0; font-size: 15px; color: #1f2937;">Bonjour {{personName}},</p>
+    <p style="margin: 0 0 18px 0; font-size: 15px; line-height: 1.6; color: #1f2937;">
+      Le tirage au sort est terminé. Voici la personne à qui vous devez offrir un cadeau.
     </p>
-    
-    <p style="font-size: 16px; color: #374151; margin-bottom: 25px;">
-      Le tirage au sort a eu lieu ! Voici à qui vous devez offrir un cadeau :
-    </p>
-    
-    <div style="background: linear-gradient(135deg, #dcfce7 0%, #f0fdf4 100%); padding: 25px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #15803d;">
-      <h3 style="color: #15803d; font-size: 24px; margin: 0 0 10px 0;">🎁 {{receiverName}}</h3>
-      
+
+    <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px; background: #f9fafb; margin-bottom: 16px;">
+      <div style="font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Votre destinataire</div>
+      <div style="margin-top: 8px; font-size: 17px; font-weight: 700; color: #0f172a;">{{receiverName}}</div>
+
       {{#receiverGiftIdea}}
-      <div style="margin: 15px 0;">
-        <p style="margin: 0 0 5px 0; font-weight: bold; color: #15803d;">💡 Idée de cadeau :</p>
-        <p style="margin: 0; color: #374151; background: white; padding: 10px; border-radius: 5px;">{{receiverGiftIdea}}</p>
+      <div style="margin-top: 12px;">
+        <div style="font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Idée cadeau</div>
+        <div style="margin-top: 6px; font-size: 15px; color: #111827; line-height: 1.6; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px;">
+          {{receiverGiftIdea}}
+        </div>
       </div>
       {{/receiverGiftIdea}}
-      
+
       {{#receiverGiftImage}}
-      <div style="margin: 15px 0;">
-        <p style="margin: 0 0 10px 0; font-weight: bold; color: #15803d;">🖼️ Image de référence :</p>
-        <img src="{{receiverGiftImage}}" alt="Idée cadeau" style="max-width: 100%; height: auto; border-radius: 5px; border: 2px solid #d1d5db;">
+      <div style="margin-top: 12px;">
+        <div style="font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Image associée</div>
+        <div style="margin-top: 10px;">
+          <img src="{{receiverGiftImage}}" alt="Idée cadeau" style="width: 100%; max-width: 100%; height: auto; border-radius: 10px; border: 1px solid #e5e7eb; display: block;">
+        </div>
       </div>
       {{/receiverGiftImage}}
     </div>
-    
-    <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
-      <p style="margin: 0; color: #92400e; font-weight: bold;">
-        🤫 <strong>Gardez le secret !</strong> Ne révélez pas à qui vous offrez un cadeau.
+
+    <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; background: #fff7ed; margin-top: 10px;">
+      <div style="font-size: 13px; color: #c2410c; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Rappel</div>
+      <p style="margin: 8px 0 0 0; font-size: 14px; color: #9a3412; line-height: 1.6;">
+        Gardez cette mission confidentielle et respectez la surprise du Secret Santa.
       </p>
     </div>
   </div>

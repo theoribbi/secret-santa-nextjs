@@ -8,10 +8,10 @@ const createTransporter = () => {
     host: process.env.SMTP_HOST,
     port: parseInt(process.env.SMTP_PORT || '587'),
     secure: process.env.SMTP_SECURE === 'true',
-    auth: {
+    auth : process.env.SMTP_USER && process.env.SMTP_PASS ? {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
-    },
+    } : undefined,
   })
 }
 
@@ -135,6 +135,38 @@ export function createAssignmentNotificationEmail(
 
   return {
     subject: `🎯 Secret Santa "${eventName}" - Votre mission !`,
+    html
+  }
+}
+
+export function createJoinConfirmationEmail(
+  personName: string,
+  eventName: string,
+  eventDate: Date,
+  giftIdea?: string,
+  giftImage?: string
+) {
+  const formattedDate = eventDate.toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+
+  const fullGiftImageUrl = getFullImageUrl(giftImage)
+
+  const html = loadTemplate('join-confirmation', {
+    personName,
+    eventName,
+    eventDate: formattedDate,
+    giftIdea,
+    giftImage: fullGiftImageUrl
+  })
+
+  return {
+    subject: `✅ Inscription confirmée - Secret Santa "${eventName}"`,
     html
   }
 }

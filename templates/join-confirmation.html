@@ -1,0 +1,44 @@
+<div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 28px; color: #111827; background: #f8fafc;">
+  <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 28px; box-shadow: 0 10px 40px rgba(15, 23, 42, 0.08);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+      <div>
+        <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #6b7280; font-weight: 600;">Confirmation d'inscription</div>
+        <h1 style="margin: 6px 0 0 0; font-size: 22px; font-weight: 700; color: #0f172a;">Secret Santa "{{eventName}}"</h1>
+      </div>
+      <div style="width: 44px; height: 44px; border-radius: 12px; background: #e0f2fe; display: flex; align-items: center; justify-content: center; color: #0ea5e9; font-weight: 700; font-size: 16px;">
+        ✓
+      </div>
+    </div>
+
+    <p style="margin: 0 0 10px 0; font-size: 15px; color: #1f2937;">Bonjour {{personName}},</p>
+    <p style="margin: 0 0 18px 0; font-size: 15px; line-height: 1.6; color: #1f2937;">
+      Votre inscription est confirmée. Ce message est uniquement une confirmation. Vous recevrez un autre email quand le tirage au sort aura été effectué.
+    </p>
+
+    <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; background: #f9fafb; margin-bottom: 16px;">
+      <div style="font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Événement</div>
+      <div style="margin-top: 6px; font-size: 15px; font-weight: 600; color: #111827;">{{eventName}}</div>
+      <div style="margin-top: 2px; font-size: 14px; color: #4b5563;">{{eventDate}}</div>
+    </div>
+
+    {{#giftIdea}}
+    <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; background: #ffffff; margin-bottom: 12px;">
+      <div style="font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Votre idée cadeau</div>
+      <div style="margin-top: 6px; font-size: 15px; color: #111827; line-height: 1.6;">{{giftIdea}}</div>
+    </div>
+    {{/giftIdea}}
+
+    {{#giftImage}}
+    <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; background: #ffffff; margin-bottom: 12px;">
+      <div style="font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Image associée</div>
+      <div style="margin-top: 10px;">
+        <img src="{{giftImage}}" alt="Idée cadeau" style="width: 100%; max-width: 100%; height: auto; border-radius: 10px; border: 1px solid #e5e7eb; display: block;">
+      </div>
+    </div>
+    {{/giftImage}}
+
+    <p style="margin: 16px 0 0 0; font-size: 14px; line-height: 1.6; color: #4b5563;">
+      Conservez ce message. Vous recevrez votre mission par email dès que le tirage sera réalisé.
+    </p>
+  </div>
+</div>

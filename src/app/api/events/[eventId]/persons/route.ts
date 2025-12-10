@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { db } from '@/db'
 import { persons, events, type NewPerson } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
-import { sendEmail, createEventInvitationEmail } from '@/lib/email'
+import { sendEmail, createEventInvitationEmail, createJoinConfirmationEmail } from '@/lib/email'
 
 export async function POST(
   request: NextRequest,
@@ -12,7 +12,7 @@ export async function POST(
   try {
     const { eventId } = await params
     const body = await request.json()
-    const { name, email, giftIdea, giftImage, force } = body
+    const { name, email, giftIdea, giftImage, force, skipInvitationEmail, sendJoinConfirmation } = body
 
     // Validation des champs obligatoires
     if (!name?.trim()) {
@@ -80,7 +80,10 @@ export async function POST(
       .where(eq(events.id, eventId))
       .limit(1)
 
-    if (event) {
+    const shouldSendInvitation = Boolean(event && !skipInvitationEmail)
+    const shouldSendJoinConfirmation = Boolean(event && sendJoinConfirmation)
+
+    if (shouldSendInvitation) {
       // Créer l'URL de participation
       const joinUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/join/${eventId}`
       
@@ -106,10 +109,35 @@ export async function POST(
       })
     }
 
-    return NextResponse.json({
-      ...createdPerson,
-      emailSent: event ? true : false
-    }, { status: 201 })
+    if (shouldSendJoinConfirmation) {
+      const confirmationContent = createJoinConfirmationEmail(
+        newPerson.name,
+        event.name,
+        new Date(event.date),
+        newPerson.giftIdea || undefined,
+        newPerson.giftImage || undefined
+      )
+
+      sendEmail({
+        to: email,
+        subject: confirmationContent.subject,
+        html: confirmationContent.html
+      }).then((result) => {
+        if (result.success) {
+          console.log(`Email de confirmation envoyé à ${email} pour l'événement ${event.name}`)
+        } else {
+          console.error(`Échec envoi email de confirmation à ${email}:`, result.error)
+        }
+      })
+    }
+
+    return NextResponse.json(
+      {
+        ...createdPerson,
+        emailSent: Boolean(shouldSendInvitation),
+      },
+      { status: 201 }
+    )
   } catch (error) {
     console.error('Erreur ajout personne:', error)
     
