@@ -130,9 +130,9 @@ export default function EventManagePage() {
 
       const data = await response.json()
       if (data.emailSent) {
-        setSuccess('Participant ajouté avec succès et email d\'invitation envoyé !')
+        setSuccess('Participant ajouté. Invitation envoyée par email.')
       } else {
-        setSuccess('Participant ajouté avec succès !')
+        setSuccess('Participant ajouté.')
       }
       setPersonForm({ name: '', email: '', giftIdea: '', giftImage: '' })
       loadPersons()
@@ -170,6 +170,17 @@ export default function EventManagePage() {
   }
 
   const handleDraw = async () => {
+    const hasMissingGiftInfo = persons.some(
+      (person) => !person.giftIdea?.trim() && !person.giftImage?.trim()
+    )
+
+    if (hasMissingGiftInfo) {
+      const proceed = confirm(
+        'Certaines personnes n’ont pas complété leur idée cadeau. Lancer le tirage malgré tout ?'
+      )
+      if (!proceed) return
+    }
+
     setDrawStatus('loading')
     setError('')
 
@@ -182,23 +193,24 @@ export default function EventManagePage() {
       
       if (response.ok) {
         if (result.emailsSent) {
-          setSuccess(`🎯 ${result.message} 📧 Emails d'assignation envoyés à tous les participants !`)
+          setSuccess(`${result.message} — emails d'assignation envoyés.`)
         } else {
-          setSuccess(`🎯 ${result.message}`)
+          setSuccess(result.message)
         }
         setDrawStatus('done')
       } else {
+        const alreadyDone = result.message?.includes('déjà été effectué')
         if (result.message?.includes('au moins 2')) {
-          setError('👥 Il faut au moins 2 participants pour effectuer un tirage au sort')
-        } else if (result.message?.includes('déjà été effectué')) {
-          setError('🎲 Le tirage au sort a déjà été effectué pour cet événement')
+          setError('Il faut au moins 2 participants pour effectuer un tirage au sort.')
+        } else if (alreadyDone) {
+          setError('Le tirage au sort a déjà été effectué pour cet événement.')
         } else {
-          setError(result.message || 'Une erreur est survenue lors du tirage au sort')
+          setError(result.message || 'Une erreur est survenue lors du tirage au sort.')
         }
-        setDrawStatus('not_done')
+        setDrawStatus(alreadyDone ? 'done' : 'not_done')
       }
     } catch (err) {
-      setError('🎲 Impossible d\'effectuer le tirage au sort. Vérifiez votre connexion et réessayez.')
+      setError('Impossible d\'effectuer le tirage au sort. Vérifiez votre connexion et réessayez.')
       setDrawStatus('not_done')
     }
   }
@@ -223,7 +235,7 @@ export default function EventManagePage() {
 
   const copyShareUrl = () => {
     navigator.clipboard.writeText(shareUrl)
-    setSuccess('Lien copié dans le presse-papier!')
+    setSuccess('Lien copié dans le presse-papier.')
   }
 
   const handleSendEventLink = async (e: React.FormEvent) => {
@@ -241,18 +253,18 @@ export default function EventManagePage() {
       })
 
       if (response.ok) {
-        setSuccess('📧 Lien de gestion envoyé par email avec succès !')
+        setSuccess('Lien de gestion envoyé par email.')
         setEmailForm('')
       } else {
         const errorData = await response.json()
         if (errorData.error.includes('email')) {
-          setError('📧 Veuillez saisir une adresse email valide')
+          setError('Veuillez saisir une adresse email valide.')
         } else {
           setError(errorData.error || 'Erreur lors de l\'envoi du lien par email')
         }
       }
     } catch (err) {
-      setError('📧 Impossible d\'envoyer l\'email. Vérifiez votre connexion et réessayez.')
+      setError('Impossible d\'envoyer l\'email. Vérifiez votre connexion et réessayez.')
     } finally {
       setIsSendingEmail(false)
     }
@@ -295,13 +307,40 @@ export default function EventManagePage() {
           )}
         </div>
 
+        <Card className="mb-6 border-dashed">
+          <CardHeader>
+            <CardTitle>Deux façons d'ajouter des participants</CardTitle>
+            <CardDescription>
+              Choisissez l'option la plus simple selon la situation.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
+            <div className="space-y-2">
+              <p className="font-medium text-gray-900">Inviter avec le lien</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Copiez le lien et envoyez-le aux participants.</li>
+                <li>Ils remplissent eux-mêmes leurs infos et idée cadeau.</li>
+                <li>Moins d'erreurs, vous gagnez du temps.</li>
+              </ul>
+            </div>
+            <div className="space-y-2">
+              <p className="font-medium text-gray-900">Ajout manuel</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>À utiliser si vous inscrivez quelqu'un à sa place.</li>
+                <li>Pratique si la personne ne peut pas accéder au lien.</li>
+                <li>Vous restez responsable de l'exactitude des infos.</li>
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Section lien de partage */}
           <Card>
             <CardHeader>
               <CardTitle>Inviter des participants</CardTitle>
               <CardDescription>
-                Partagez ce lien pour que les gens puissent s'inscrire eux-mêmes
+                Partagez ce lien pour que les participants s'inscrivent eux-mêmes.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -323,7 +362,7 @@ export default function EventManagePage() {
             <CardHeader>
               <CardTitle>Ajouter manuellement</CardTitle>
               <CardDescription>
-                Ajoutez directement un participant
+                À utiliser si vous complétez les infos à la place de quelqu'un.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -363,16 +402,16 @@ export default function EventManagePage() {
               <div className="flex gap-2">
                 {drawStatus === 'not_done' && (
                   <Button onClick={handleDraw} className="bg-green-600 hover:bg-green-700">
-                    🎲 Effectuer le tirage au sort
+                    Lancer le tirage au sort
                   </Button>
                 )}
                 {drawStatus === 'done' && (
                   <Button onClick={handleResetDraw} variant="outline">
-                    🔄 Réinitialiser le tirage
+                    Réinitialiser le tirage
                   </Button>
                 )}
                 {drawStatus === 'loading' && (
-                  <Button disabled>⏳ Tirage en cours...</Button>
+                  <Button disabled>Tirage en cours...</Button>
                 )}
               </div>
             )}
@@ -384,20 +423,20 @@ export default function EventManagePage() {
               <p className="text-gray-500">Aucun participant pour le moment.</p>
             ) : (
               <div className="space-y-2">
-                {persons.map((person) => (
-                  <div key={person.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <p className="font-medium">{person.name}</p>
-                      <p className="text-sm text-gray-600">{person.email}</p>
-                      {person.giftIdea && (
-                        <p className="text-sm text-gray-500">💡 {person.giftIdea}</p>
-                      )}
+                {persons.map((person) => {
+                  const hasGiftDetails = Boolean(person.giftIdea?.trim() || person.giftImage?.trim())
+                  return (
+                    <div key={person.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{person.name}</p>
+                        <p className="text-sm text-gray-600">{person.email}</p>
+                      </div>
+                      <Badge variant={hasGiftDetails ? 'default' : 'secondary'}>
+                        {hasGiftDetails ? 'Inscrit' : 'Cadeau à compléter'}
+                      </Badge>
                     </div>
-                    <Badge variant="outline">
-                      Inscrit
-                    </Badge>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
 

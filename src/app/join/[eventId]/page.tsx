@@ -81,6 +81,12 @@ export default function JoinEventPage() {
     setIsJoining(true)
     setError('')
 
+    if (!dataToSubmit.giftIdea?.trim()) {
+      setError('Merci d’indiquer une idée de cadeau (obligatoire).')
+      setIsJoining(false)
+      return
+    }
+
     try {
       const response = await fetch(`/api/events/${eventId}/persons`, {
         method: 'POST',
@@ -267,16 +273,17 @@ export default function JoinEventPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="giftIdea">Idée de cadeau (optionnel)</Label>
+                  <Label htmlFor="giftIdea">Idée de cadeau *</Label>
                   <Textarea
                     id="giftIdea"
                     placeholder="Décrivez ce qui vous ferait plaisir (livres, gadgets, etc.)"
                     value={formData.giftIdea}
                     onChange={(e) => setFormData(prev => ({ ...prev, giftIdea: e.target.value }))}
                     rows={3}
+                    required
                   />
                   <p className="text-sm text-gray-500">
-                    Cette information aidera la personne qui vous tirera au sort
+                    Obligatorie. L’image est optionnelle, mais l’idée doit être renseignée.
                   </p>
                 </div>
 

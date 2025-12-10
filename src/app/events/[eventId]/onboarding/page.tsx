@@ -173,18 +173,18 @@ export default function OnboardingPage() {
       })
 
       if (response.ok) {
-        setSuccess('📧 Lien de gestion envoyé par email avec succès !')
+        setSuccess('Lien de gestion envoyé par email.')
         setEmailSent(true)
       } else {
         const errorData = await response.json()
         if (errorData.error?.includes('email')) {
-          setError('📧 Veuillez saisir une adresse email valide')
+          setError('Veuillez saisir une adresse email valide.')
         } else {
           setError(errorData.error || 'Erreur lors de l\'envoi du lien par email')
         }
       }
     } catch {
-      setError('📧 Impossible d\'envoyer l\'email. Vérifiez votre connexion et réessayez.')
+      setError('Impossible d\'envoyer l\'email. Vérifiez votre connexion et réessayez.')
     } finally {
       setIsSendingEmail(false)
     }
@@ -236,11 +236,9 @@ export default function OnboardingPage() {
         
         {/* En-tête */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">🎉 Événement créé !</h1>
-          <h2 className="text-xl text-green-600 font-semibold">{event.name}</h2>
-          <p className="text-gray-600 mt-2">
-            Suivez ces étapes pour configurer votre Secret Santa
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Événement créé</h1>
+          <h2 className="text-xl text-green-700 font-semibold">{event.name}</h2>
+          <p className="text-gray-600 mt-2">Suivez ces étapes pour le préparer.</p>
         </div>
 
         {/* Indicateur d'étapes */}
@@ -267,10 +265,8 @@ export default function OnboardingPage() {
         {currentStep === 1 && (
           <Card>
             <CardHeader>
-              <CardTitle>📝 Étape 1 : Inviter des participants</CardTitle>
-              <CardDescription>
-                Ajoutez des personnes à votre Secret Santa. Vous pouvez les ajouter manuellement ou partager le lien.
-              </CardDescription>
+          <CardTitle>Étape 1 : Inviter des participants</CardTitle>
+          <CardDescription>Ajoutez des personnes ou partagez le lien d’inscription.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               
@@ -294,8 +290,7 @@ export default function OnboardingPage() {
 
               <Alert>
                 <AlertDescription>
-                  💡 <strong>Conseil :</strong> Vous pouvez mélanger les deux approches ! 
-                  Ajoutez quelques personnes manuellement et partagez le lien pour les autres.
+                  Astuce : combinez les deux. Ajoutez certains manuellement et partagez le lien pour les autres.
                 </AlertDescription>
               </Alert>
 
@@ -304,9 +299,7 @@ export default function OnboardingPage() {
                 {/* Ajout manuel */}
                 <div className="space-y-4">
                   <h3 className="font-semibold">Ajouter manuellement</h3>
-                  <p className="text-sm text-gray-600">
-                    Ils recevront automatiquement une invitation par email
-                  </p>
+                  <p className="text-sm text-gray-600">Pour inscrire quelqu’un à sa place.</p>
                   <form onSubmit={handleAddPerson} className="space-y-3">
                     <div>
                       <Label htmlFor="name">Nom</Label>
@@ -336,9 +329,7 @@ export default function OnboardingPage() {
                 {/* Lien de partage */}
                 <div className="space-y-4">
                   <h3 className="font-semibold">Partager le lien</h3>
-                  <p className="text-sm text-gray-600">
-                    Les gens peuvent s'inscrire eux-mêmes avec ce lien :
-                  </p>
+                  <p className="text-sm text-gray-600">Envoi simple : ils remplissent eux-mêmes.</p>
                   <div className="flex gap-2">
                     <Input 
                       value={shareUrl} 
@@ -355,10 +346,10 @@ export default function OnboardingPage() {
               {/* Navigation */}
               <div className="flex justify-between pt-4 border-t">
                 <Button variant="outline" onClick={() => router.push('/')}>
-                  ← Retour
+                  Retour
                 </Button>
                 <Button onClick={() => setCurrentStep(2)}>
-                  Continuer →
+                  Continuer
                 </Button>
               </div>
             </CardContent>
@@ -369,26 +360,23 @@ export default function OnboardingPage() {
         {currentStep === 2 && (
           <Card>
             <CardHeader>
-              <CardTitle>⚠️ Étape 2 : Gardez l'accès à votre événement</CardTitle>
-              <CardDescription>
-                Important : vous devrez revenir sur la page de gestion pour effectuer le tirage au sort
-              </CardDescription>
+          <CardTitle>Étape 2 : Conservez l’accès</CardTitle>
+          <CardDescription>Vous reviendrez ici pour lancer le tirage.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               
               <Alert>
                 <AlertDescription>
-                  <strong>Comment ça fonctionne :</strong><br/>
-                  1. Les participants s'inscrivent (manuellement ou via le lien)<br/>
-                  2. Quand tout le monde est inscrit, vous revenez sur la page de gestion<br/>
-                  3. Vous cliquez sur "Effectuer le tirage au sort"<br/>
-                  4. Chaque participant reçoit son assignation par email ! 🎯
+                  1) Les participants s’inscrivent (manuellement ou via le lien).<br/>
+                  2) Quand c’est complet, revenez sur la page de gestion.<br/>
+                  3) Lancez le tirage au sort.<br/>
+                  4) Chaque participant reçoit son assignation par email.
                 </AlertDescription>
               </Alert>
 
               <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
                 <h3 className="font-semibold text-yellow-800 mb-2">
-                  📧 Recevez le lien par email (obligatoire)
+                  Recevez le lien par email (obligatoire)
                 </h3>
                 <p className="text-yellow-700 text-sm mb-4">
                   Pour ne pas perdre l'accès à votre événement, nous devons vous envoyer le lien de gestion.
@@ -408,19 +396,19 @@ export default function OnboardingPage() {
                       />
                     </div>
                     <Button type="submit" disabled={isSendingEmail || !organizerEmail}>
-                      {isSendingEmail ? '📧 Envoi...' : '📧 Recevoir le lien par email'}
+                      {isSendingEmail ? 'Envoi...' : 'Recevoir le lien par email'}
                     </Button>
                   </form>
                 ) : (
                   <div className="text-green-700">
-                    ✅ Email envoyé ! Vérifiez votre boîte de réception.
+                    Email envoyé. Vérifiez votre boîte de réception.
                   </div>
                 )}
               </div>
 
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                 <h3 className="font-semibold text-blue-800 mb-2">
-                  🔗 Lien de gestion
+                  Lien de gestion
                 </h3>
                 <p className="text-blue-700 text-sm mb-2">
                   Vous pouvez aussi sauvegarder ce lien directement :
@@ -460,16 +448,14 @@ export default function OnboardingPage() {
         {currentStep === 3 && (
           <Card>
             <CardHeader>
-              <CardTitle>🎅 Étape 3 : Vous aussi, participez !</CardTitle>
-              <CardDescription>
-                Voulez-vous vous inscrire à votre propre Secret Santa ?
-              </CardDescription>
+          <CardTitle>Étape 3 : Participez (optionnel)</CardTitle>
+          <CardDescription>Inscrivez-vous aussi si vous voulez jouer.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               
               <div className="text-center space-y-4">
                 <p className="text-lg">
-                  En tant qu'organisateur, vous pouvez aussi participer au Secret Santa ! 🎁
+                  En tant qu'organisateur, vous pouvez aussi participer au Secret Santa.
                 </p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -478,14 +464,14 @@ export default function OnboardingPage() {
                     size="lg"
                     className="bg-green-600 hover:bg-green-700"
                   >
-                    🎄 Oui, je participe !
+                    Je participe
                   </Button>
                   <Button 
                     onClick={goToEventPage}
                     variant="outline"
                     size="lg"
                   >
-                    ⏭️ Passer cette étape
+                    Passer cette étape
                   </Button>
                 </div>
               </div>
@@ -496,14 +482,14 @@ export default function OnboardingPage() {
                   size="lg"
                   variant="default"
                 >
-                  🎯 Accéder à la page de gestion
+                  Accéder à la page de gestion
                 </Button>
               </div>
 
               {/* Navigation */}
               <div className="flex justify-between pt-4 border-t">
                 <Button variant="outline" onClick={() => setCurrentStep(2)}>
-                  ← Précédent
+                  Précédent
                 </Button>
               </div>
             </CardContent>
