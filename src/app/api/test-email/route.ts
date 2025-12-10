@@ -4,11 +4,37 @@ import { sendEmail, createEventInvitationEmail, createAssignmentNotificationEmai
 export async function POST(request: NextRequest) {
   try {
     const { type, to } = await request.json()
+    const trimmedTo = typeof to === 'string' ? to.trim() : ''
 
-    if (!to) {
+    if (!trimmedTo) {
       return NextResponse.json(
         { error: 'L\'adresse email "to" est requise' },
         { status: 400 }
+      )
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(trimmedTo)) {
+      return NextResponse.json(
+        { error: 'Format d\'email invalide' },
+        { status: 400 }
+      )
+    }
+
+    const missingSmtp = [
+      ['SMTP_HOST', process.env.SMTP_HOST],
+      ['SMTP_PORT', process.env.SMTP_PORT],
+      ['SMTP_USER', process.env.SMTP_USER],
+      ['SMTP_PASS', process.env.SMTP_PASS],
+      ['SMTP_FROM_EMAIL', process.env.SMTP_FROM_EMAIL],
+    ]
+      .filter(([, v]) => !v)
+      .map(([k]) => k)
+
+    if (missingSmtp.length > 0) {
+      return NextResponse.json(
+        { error: 'Configuration SMTP incomplète', details: missingSmtp },
+        { status: 500 }
       )
     }
 
@@ -90,7 +116,7 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await sendEmail({
-      to,
+      to: trimmedTo,
       subject,
       html: emailContent.html
     })

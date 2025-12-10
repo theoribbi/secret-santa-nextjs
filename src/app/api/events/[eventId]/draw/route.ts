@@ -12,6 +12,25 @@ export async function POST(
 ) {
   try {
     const { eventId } = await params
+
+    const missingSmtp = [
+      ['SMTP_HOST', process.env.SMTP_HOST],
+      ['SMTP_PORT', process.env.SMTP_PORT],
+      ['SMTP_USER', process.env.SMTP_USER],
+      ['SMTP_PASS', process.env.SMTP_PASS],
+      ['SMTP_FROM_EMAIL', process.env.SMTP_FROM_EMAIL],
+    ]
+      .filter(([, v]) => !v)
+      .map(([k]) => k)
+
+    if (missingSmtp.length > 0) {
+      console.error('SMTP config manquante pour envoi des assignations:', missingSmtp)
+      return NextResponse.json(
+        { error: 'Configuration SMTP incomplète', details: missingSmtp },
+        { status: 500 }
+      )
+    }
+
     const result = await performSecretSantaDraw(eventId)
 
     if (result.success) {

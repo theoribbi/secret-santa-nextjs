@@ -83,7 +83,17 @@ export async function POST(
     const shouldSendInvitation = Boolean(event && !skipInvitationEmail)
     const shouldSendJoinConfirmation = Boolean(event && sendJoinConfirmation)
 
-    if (shouldSendInvitation) {
+    const missingSmtp = [
+      ['SMTP_HOST', process.env.SMTP_HOST],
+      ['SMTP_PORT', process.env.SMTP_PORT],
+      ['SMTP_USER', process.env.SMTP_USER],
+      ['SMTP_PASS', process.env.SMTP_PASS],
+      ['SMTP_FROM_EMAIL', process.env.SMTP_FROM_EMAIL],
+    ]
+      .filter(([, v]) => !v)
+      .map(([k]) => k)
+
+    if (shouldSendInvitation && missingSmtp.length === 0) {
       // Créer l'URL de participation
       const joinUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/join/${eventId}`
       
@@ -97,19 +107,19 @@ export async function POST(
 
       // Envoyer l'email en arrière-plan (ne pas bloquer la réponse)
       sendEmail({
-        to: email,
+        to: newPerson.email,
         subject: emailContent.subject,
         html: emailContent.html
       }).then((result) => {
         if (result.success) {
-          console.log(`Email d'invitation envoyé à ${email} pour l'événement ${event.name}`)
+          console.log(`Email d'invitation envoyé à ${newPerson.email} pour l'événement ${event.name}`)
         } else {
-          console.error(`Échec envoi email à ${email}:`, result.error)
+          console.error(`Échec envoi email à ${newPerson.email}:`, result.error)
         }
       })
     }
 
-    if (shouldSendJoinConfirmation) {
+    if (shouldSendJoinConfirmation && missingSmtp.length === 0) {
       const confirmationContent = createJoinConfirmationEmail(
         newPerson.name,
         event.name,
@@ -119,14 +129,14 @@ export async function POST(
       )
 
       sendEmail({
-        to: email,
+        to: newPerson.email,
         subject: confirmationContent.subject,
         html: confirmationContent.html
       }).then((result) => {
         if (result.success) {
-          console.log(`Email de confirmation envoyé à ${email} pour l'événement ${event.name}`)
+          console.log(`Email de confirmation envoyé à ${newPerson.email} pour l'événement ${event.name}`)
         } else {
-          console.error(`Échec envoi email de confirmation à ${email}:`, result.error)
+          console.error(`Échec envoi email de confirmation à ${newPerson.email}:`, result.error)
         }
       })
     }

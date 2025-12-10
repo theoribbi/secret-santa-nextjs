@@ -11,11 +11,38 @@ export async function POST(
   try {
     const { eventId } = await params
     const { email } = await request.json()
+    const trimmedEmail = typeof email === 'string' ? email.trim() : ''
 
-    if (!email) {
+    if (!trimmedEmail) {
       return NextResponse.json(
         { error: 'L\'adresse email est requise' },
         { status: 400 }
+      )
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(trimmedEmail)) {
+      return NextResponse.json(
+        { error: 'Le format de l\'adresse email est invalide' },
+        { status: 400 }
+      )
+    }
+
+    const missingSmtp = [
+      ['SMTP_HOST', process.env.SMTP_HOST],
+      ['SMTP_PORT', process.env.SMTP_PORT],
+      ['SMTP_USER', process.env.SMTP_USER],
+      ['SMTP_PASS', process.env.SMTP_PASS],
+      ['SMTP_FROM_EMAIL', process.env.SMTP_FROM_EMAIL],
+    ]
+      .filter(([, v]) => !v)
+      .map(([k]) => k)
+
+    if (missingSmtp.length > 0) {
+      console.error('SMTP config manquante pour send-link:', missingSmtp)
+      return NextResponse.json(
+        { error: 'Configuration SMTP incomplète', details: missingSmtp },
+        { status: 500 }
       )
     }
 
@@ -41,7 +68,7 @@ export async function POST(
 
     // Envoyer l'email
     const result = await sendEmail({
-      to: email,
+      to: trimmedEmail,
       subject: emailContent.subject,
       html: emailContent.html
     })
@@ -53,6 +80,7 @@ export async function POST(
         messageId: result.messageId
       })
     } else {
+      console.error('Échec envoi email send-link:', result.error)
       return NextResponse.json(
         { error: 'Échec de l\'envoi de l\'email', details: result.error },
         { status: 500 }

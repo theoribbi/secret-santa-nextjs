@@ -12,6 +12,9 @@ const createTransporter = () => {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     } : undefined,
+    pool: true,
+    maxConnections: 3,
+    maxMessages: 30,
   })
 }
 
