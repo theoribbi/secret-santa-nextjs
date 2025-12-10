@@ -31,7 +31,7 @@ export default function JoinEventPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const eventId = params.eventId as string
-  const invitedEmail = searchParams.get('email')
+  const personId = searchParams.get('pid') // ID de la personne pour authentification
   
   const [event, setEvent] = useState<Event | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -64,12 +64,12 @@ export default function JoinEventPage() {
     loadEvent()
   }, [eventId])
 
-  // Charger la personne invitée si email dans l'URL
+  // Charger la personne invitée si ID dans l'URL
   useEffect(() => {
-    if (invitedEmail && event) {
-      loadInvitedPerson(invitedEmail)
+    if (personId && event) {
+      loadInvitedPerson(personId)
     }
-  }, [invitedEmail, event])
+  }, [personId, event])
 
   const loadEvent = async () => {
     try {
@@ -86,9 +86,9 @@ export default function JoinEventPage() {
     }
   }
 
-  const loadInvitedPerson = async (email: string) => {
+  const loadInvitedPerson = async (pid: string) => {
     try {
-      const response = await fetch(`/api/events/${eventId}/persons?email=${encodeURIComponent(email)}`)
+      const response = await fetch(`/api/events/${eventId}/persons?pid=${pid}`)
       if (response.ok) {
         const person = await response.json()
         setExistingPerson(person)
@@ -108,7 +108,7 @@ export default function JoinEventPage() {
         }
       }
     } catch (err) {
-      // Email pas trouvé, mode normal
+      // Personne pas trouvée, mode normal
       setIsInvited(false)
     }
   }
@@ -135,12 +135,18 @@ export default function JoinEventPage() {
       return
     }
 
+    if (!existingPerson?.id) {
+      setError('Erreur : impossible d\'identifier le participant.')
+      setIsJoining(false)
+      return
+    }
+
     try {
       const response = await fetch(`/api/events/${eventId}/persons`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: formData.email,
+          personId: existingPerson.id,
           giftIdea: formData.giftIdea,
           giftImage: formData.giftImage
         })

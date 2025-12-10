@@ -106,8 +106,8 @@ export async function POST(
     let confirmationSent = false
 
     if (shouldSendInvitation && hasResendKey) {
-      // Créer l'URL de participation avec l'email pré-rempli
-      const joinUrl = `${baseUrl}/join/${eventId}?email=${encodeURIComponent(newPerson.email)}`
+      // Créer l'URL de participation avec l'ID de la personne (pour authentification)
+      const joinUrl = `${baseUrl}/join/${eventId}?pid=${createdPerson.id}`
       
       // Créer et envoyer l'email d'invitation
       const emailContent = createEventInvitationEmail(
@@ -211,16 +211,16 @@ export async function GET(
   try {
     const { eventId } = await params
     const { searchParams } = new URL(request.url)
-    const emailParam = searchParams.get('email')
+    const pidParam = searchParams.get('pid') // Person ID pour authentification
 
-    // Si un email est fourni, retourner uniquement cette personne
-    if (emailParam) {
+    // Si un ID de personne est fourni, retourner uniquement cette personne
+    if (pidParam) {
       const [person] = await db
         .select()
         .from(persons)
         .where(and(
-          eq(persons.eventId, eventId),
-          eq(persons.email, emailParam.toLowerCase())
+          eq(persons.id, pidParam),
+          eq(persons.eventId, eventId)
         ))
         .limit(1)
 
@@ -258,22 +258,22 @@ export async function PATCH(
   try {
     const { eventId } = await params
     const body = await request.json()
-    const { email, giftIdea, giftImage } = body
+    const { personId, giftIdea, giftImage } = body
 
-    if (!email?.trim()) {
+    if (!personId) {
       return NextResponse.json(
-        { error: 'L\'email est obligatoire' },
+        { error: 'L\'identifiant du participant est obligatoire' },
         { status: 400 }
       )
     }
 
-    // Vérifier que la personne existe
+    // Vérifier que la personne existe et appartient à cet événement
     const [existingPerson] = await db
       .select()
       .from(persons)
       .where(and(
-        eq(persons.eventId, eventId),
-        eq(persons.email, email.trim().toLowerCase())
+        eq(persons.id, personId),
+        eq(persons.eventId, eventId)
       ))
       .limit(1)
 
