@@ -1,32 +1,19 @@
-import * as nodemailer from 'nodemailer'
+import { Resend } from 'resend'
 import * as fs from 'fs'
 import * as path from 'path'
 
-// Singleton transporter pour réutiliser la connexion
-let transporter: nodemailer.Transporter | null = null
+// Client Resend singleton
+let resendClient: Resend | null = null
 
-const getTransporter = () => {
-  if (!transporter) {
-    transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-      // Timeouts pour éviter les blocages
-      connectionTimeout: 10000, // 10 secondes pour établir la connexion
-      greetingTimeout: 10000,   // 10 secondes pour le greeting SMTP
-      socketTimeout: 30000,     // 30 secondes pour les opérations socket
-      // Options TLS pour Infomaniak et autres providers
-      tls: {
-        rejectUnauthorized: true,
-        minVersion: 'TLSv1.2'
-      }
-    })
+const getResendClient = () => {
+  if (!resendClient) {
+    const apiKey = process.env.RESEND_API_KEY
+    if (!apiKey) {
+      throw new Error('RESEND_API_KEY is not defined')
+    }
+    resendClient = new Resend(apiKey)
   }
-  return transporter
+  return resendClient
 }
 
 interface EmailOptions {
@@ -66,19 +53,26 @@ function loadTemplate(templateName: string, variables: Record<string, any>): str
 
 export async function sendEmail(options: EmailOptions) {
   try {
-    const transporter = getTransporter()
+    const resend = getResendClient()
     
-    const mailOptions = {
-      from: `${process.env.SMTP_FROM_NAME || 'Secret Santa Test'} <${process.env.SMTP_FROM_EMAIL}>`,
-      to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+    const fromName = process.env.RESEND_FROM_NAME || 'Secret Santa'
+    
+    const { data, error } = await resend.emails.send({
+      from: `${fromName} <${fromEmail}>`,
+      to: Array.isArray(options.to) ? options.to : [options.to],
       subject: options.subject,
       html: options.html,
       text: options.text || options.html.replace(/<[^>]*>/g, ''),
+    })
+
+    if (error) {
+      console.error('Failed to send email:', error)
+      return { success: false, error: error.message }
     }
 
-    const info = await transporter.sendMail(mailOptions)
-    console.log('Email sent successfully:', info.messageId)
-    return { success: true, messageId: info.messageId }
+    console.log('Email sent successfully:', data?.id)
+    return { success: true, messageId: data?.id }
   } catch (error) {
     console.error('Failed to send email:', error)
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
@@ -94,8 +88,8 @@ function getFullImageUrl(imagePath: string | undefined): string | undefined {
     return imagePath
   }
   
-  // Construire l'URL complète - utiliser APP_URL (runtime serveur) ou NEXT_PUBLIC_APP_URL
-  const baseUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  // Construire l'URL complète - utiliser APP_URL (runtime serveur)
+  const baseUrl = process.env.APP_URL || 'http://localhost:3000'
   return `${baseUrl}${imagePath.startsWith('/') ? imagePath : '/' + imagePath}`
 }
 

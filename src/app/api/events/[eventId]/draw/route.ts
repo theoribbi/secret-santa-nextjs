@@ -13,20 +13,10 @@ export async function POST(
   try {
     const { eventId } = await params
 
-    const missingSmtp = [
-      ['SMTP_HOST', process.env.SMTP_HOST],
-      ['SMTP_PORT', process.env.SMTP_PORT],
-      ['SMTP_USER', process.env.SMTP_USER],
-      ['SMTP_PASS', process.env.SMTP_PASS],
-      ['SMTP_FROM_EMAIL', process.env.SMTP_FROM_EMAIL],
-    ]
-      .filter(([, v]) => !v)
-      .map(([k]) => k)
-
-    if (missingSmtp.length > 0) {
-      console.error('SMTP config manquante pour envoi des assignations:', missingSmtp)
+    if (!process.env.RESEND_API_KEY) {
+      console.error('RESEND_API_KEY manquante pour envoi des assignations')
       return NextResponse.json(
-        { error: 'Configuration SMTP incomplète', details: missingSmtp },
+        { error: 'Configuration email incomplète (RESEND_API_KEY manquante)' },
         { status: 500 }
       )
     }

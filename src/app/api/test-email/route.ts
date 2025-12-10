@@ -21,19 +21,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const missingSmtp = [
-      ['SMTP_HOST', process.env.SMTP_HOST],
-      ['SMTP_PORT', process.env.SMTP_PORT],
-      ['SMTP_USER', process.env.SMTP_USER],
-      ['SMTP_PASS', process.env.SMTP_PASS],
-      ['SMTP_FROM_EMAIL', process.env.SMTP_FROM_EMAIL],
-    ]
-      .filter(([, v]) => !v)
-      .map(([k]) => k)
-
-    if (missingSmtp.length > 0) {
+    if (!process.env.RESEND_API_KEY) {
       return NextResponse.json(
-        { error: 'Configuration SMTP incomplète', details: missingSmtp },
+        { error: 'Configuration email incomplète (RESEND_API_KEY manquante)' },
         { status: 500 }
       )
     }
@@ -84,18 +74,18 @@ export async function POST(request: NextRequest) {
 
       case 'simple':
       default:
-        subject = '🧪 Test Email - Secret Santa'
+        subject = '🧪 Test Email - Secret Santa (Resend)'
         emailContent = {
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
               <div style="background: linear-gradient(135deg, #fee2e2 0%, #dcfce7 100%); padding: 20px; border-radius: 10px; text-align: center;">
                 <h1 style="color: #dc2626; margin: 0;">🧪 Test Email</h1>
-                <p style="color: #15803d; margin: 10px 0;">Secret Santa Application</p>
+                <p style="color: #15803d; margin: 10px 0;">Secret Santa Application (via Resend)</p>
               </div>
               
               <div style="background: white; padding: 20px; margin-top: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
                 <p style="color: #374151;">
-                  Ceci est un email de test pour vérifier que Mailhog fonctionne correctement ! 🎅
+                  Ceci est un email de test pour vérifier que Resend fonctionne correctement ! 🎅
                 </p>
                 
                 <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
@@ -106,7 +96,7 @@ export async function POST(request: NextRequest) {
                 </div>
                 
                 <p style="color: #374151;">
-                  Si vous recevez cet email, la configuration SMTP fonctionne parfaitement ! ✅
+                  Si vous recevez cet email, la configuration Resend fonctionne parfaitement ! ✅
                 </p>
               </div>
             </div>
@@ -124,7 +114,7 @@ export async function POST(request: NextRequest) {
     if (result.success) {
       return NextResponse.json({
         success: true,
-        message: 'Email envoyé avec succès !',
+        message: 'Email envoyé avec succès via Resend !',
         messageId: result.messageId,
         type
       })
@@ -147,12 +137,11 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   return NextResponse.json({
     message: 'API de test d\'email - Utilisez POST avec { "to": "email@example.com", "type": "simple|invitation|assignment|assignment-external|event-link" }',
-    mailhogUrl: `http://localhost:${process.env.MAILHOG_WEB_PORT || 8025}`,
-    smtpConfig: {
-      host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
-      secure: process.env.SMTP_SECURE === 'true',
-      from: `${process.env.SMTP_FROM_NAME} <${process.env.SMTP_FROM_EMAIL}>`
+    provider: 'Resend',
+    config: {
+      hasApiKey: Boolean(process.env.RESEND_API_KEY),
+      fromEmail: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
+      fromName: process.env.RESEND_FROM_NAME || 'Secret Santa'
     }
   })
 }

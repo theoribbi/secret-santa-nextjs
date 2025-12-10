@@ -100,20 +100,12 @@ export async function POST(
     const shouldSendInvitation = Boolean(event && !skipInvitationEmail)
     const shouldSendJoinConfirmation = Boolean(event && sendJoinConfirmation)
 
-    const missingSmtp = [
-      ['SMTP_HOST', process.env.SMTP_HOST],
-      ['SMTP_PORT', process.env.SMTP_PORT],
-      ['SMTP_USER', process.env.SMTP_USER],
-      ['SMTP_PASS', process.env.SMTP_PASS],
-      ['SMTP_FROM_EMAIL', process.env.SMTP_FROM_EMAIL],
-    ]
-      .filter(([, v]) => !v)
-      .map(([k]) => k)
+    const hasResendKey = Boolean(process.env.RESEND_API_KEY)
 
     let invitationSent = false
     let confirmationSent = false
 
-    if (shouldSendInvitation && missingSmtp.length === 0) {
+    if (shouldSendInvitation && hasResendKey) {
       // Créer l'URL de participation
       const joinUrl = `${baseUrl}/join/${eventId}`
       
@@ -139,7 +131,7 @@ export async function POST(
       }
     }
 
-    if (shouldSendJoinConfirmation && missingSmtp.length === 0) {
+    if (shouldSendJoinConfirmation && hasResendKey) {
       const confirmationContent = createJoinConfirmationEmail(
         newPerson.name,
         event.name,
