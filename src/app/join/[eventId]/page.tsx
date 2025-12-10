@@ -177,12 +177,9 @@ export default function JoinEventPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card>
-          <CardContent className="pt-6">
-            <p>Chargement de l'événement...</p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-green-50 flex flex-col items-center justify-center gap-4">
+        <div className="w-12 h-12 border-4 border-green-200 border-t-green-600 rounded-full animate-spin" />
+        <p className="text-gray-600 text-lg">Chargement...</p>
       </div>
     )
   }
