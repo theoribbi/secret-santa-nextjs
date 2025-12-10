@@ -2,19 +2,16 @@ import * as nodemailer from 'nodemailer'
 import * as fs from 'fs'
 import * as path from 'path'
 
-// SMTP transport - CONFIGURATION IDENTIQUE AU TEST QUI MARCHE
+// SMTP transport - Configuration identique à test-smtp qui fonctionne
 const createTransporter = () => {
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: parseInt(process.env.SMTP_PORT || '587'),
     secure: process.env.SMTP_SECURE === 'true',
-    auth : process.env.SMTP_USER && process.env.SMTP_PASS ? {
+    auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
-    } : undefined,
-    pool: true,
-    maxConnections: 3,
-    maxMessages: 30,
+    },
   })
 }
 
